@@ -37,6 +37,9 @@
    deleting nodes.
 
    $Log$
+   Revision 1.4  2005/03/29 14:48:54  ritt
+   Implemented mxml_write_comment()
+
    Revision 1.3  2005/03/29 14:37:46  ritt
    Translate '<' and '&' always in writer
 
@@ -159,7 +162,7 @@ size_t strlcat(char *dst, const char *src, size_t size)
 
 /*------------------------------------------------------------------*/
 
-int mxml_write_line(MXML_WRITER *writer, char *line)
+int mxml_write_line(MXML_WRITER *writer, const char *line)
 {
    int len;
    
@@ -492,6 +495,25 @@ int mxml_write_value(MXML_WRITER *writer, const char *data)
    strcpy(data_enc, data);
    mxml_encode(data_enc, data_size, writer->translate);
    return mxml_write_line(writer, data_enc) == (int)strlen(data_enc);
+}
+
+/*------------------------------------------------------------------*/
+
+int mxml_write_comment(MXML_WRITER *writer, const char *string)
+/* write a comment to an XML file, enclosed in "<!--" and "-->" */
+{
+   static char *data_enc;
+   static int data_size = 0;
+
+   if (!writer->element_is_open)
+      return FALSE;
+
+   if (mxml_write_line(writer, "<!-- ") != 5)
+      return FALSE;
+
+   mxml_write_line(writer, string);
+
+   return mxml_write_line(writer, " -->\n") == 5;
 }
 
 /*------------------------------------------------------------------*/

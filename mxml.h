@@ -6,6 +6,9 @@
    Contents:     Header file for mxml.c
 
    $Log$
+   Revision 1.3  2005/03/29 14:48:54  ritt
+   Implemented mxml_write_comment()
+
    Revision 1.2  2005/03/29 14:14:38  ritt
    Implemented mxml_set_translate
 
@@ -58,6 +61,7 @@ MXML_WRITER *mxml_open_buffer(void);
 int mxml_set_translate(MXML_WRITER *writer, int flag);
 int mxml_start_element(MXML_WRITER *writer, const char *name);
 int mxml_end_element(MXML_WRITER *writer); 
+int mxml_write_comment(MXML_WRITER *writer, const char *string);
 int mxml_write_attribute(MXML_WRITER *writer, const char *name, const char *value);
 int mxml_write_value(MXML_WRITER *writer, const char *value);
 char *mxml_close_buffer(MXML_WRITER *writer);
