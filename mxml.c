@@ -37,8 +37,11 @@
    deleting nodes.
 
    $Log$
-   Revision 1.1  2005/03/29 08:19:45  ritt
-   Initial revision
+   Revision 1.2  2005/03/29 14:14:38  ritt
+   Implemented mxml_set_translate
+
+   Revision 1.1.1.1  2005/03/29 08:19:45  ritt
+   Imported sources
 
 \********************************************************************/
 
@@ -186,6 +189,7 @@ MXML_WRITER *mxml_open_buffer()
 
    writer = (MXML_WRITER *)malloc(sizeof(MXML_WRITER));
    memset(writer, 0, sizeof(MXML_WRITER));
+   writer->translate = 1;
 
    writer->buffer_size = 10000;
    writer->buffer = (char *)malloc(10000);
@@ -219,6 +223,7 @@ MXML_WRITER *mxml_open_file(const char *file_name)
 
    writer = (MXML_WRITER *)malloc(sizeof(MXML_WRITER));
    memset(writer, 0, sizeof(MXML_WRITER));
+   writer->translate = 1;
 
    writer->fh = open(file_name, O_RDWR | O_CREAT | O_TRUNC | O_TEXT, 0644);
 
@@ -336,6 +341,17 @@ void mxml_decode(char *str)
 
 /*------------------------------------------------------------------*/
 
+int mxml_set_translate(MXML_WRITER *writer, int flag)
+/* set translation of <,>,",',&, on/off in writer */
+{
+   int old_flag;
+
+   old_flag = writer->translate;
+   writer->translate = flag;
+   return old_flag;
+}
+/*------------------------------------------------------------------*/
+
 int mxml_start_element(MXML_WRITER *writer, const char *name)
 /* start a new XML element, must be followed by mxml_end_elemnt */
 {
@@ -352,7 +368,8 @@ int mxml_start_element(MXML_WRITER *writer, const char *name)
       strlcat(line, XML_INDENT, sizeof(line));
    strlcat(line, "<", sizeof(line));
    strlcpy(name_enc, name, sizeof(name_enc));
-   mxml_encode(name_enc, sizeof(name_enc));
+   if (writer->translate)
+      mxml_encode(name_enc, sizeof(name_enc));
    strlcat(line, name_enc, sizeof(line));
 
    /* put element on stack */
@@ -421,9 +438,11 @@ int mxml_write_attribute(MXML_WRITER *writer, const char *name, const char *valu
       return FALSE;
 
    strcpy(name_enc, name);
-   mxml_encode(name_enc, sizeof(name_enc));
+   if (writer->translate)
+      mxml_encode(name_enc, sizeof(name_enc));
    strcpy(val_enc, value);
-   mxml_encode(val_enc, sizeof(val_enc));
+   if (writer->translate)
+      mxml_encode(val_enc, sizeof(val_enc));
 
    sprintf(line, " %s=\"%s\"", name_enc, val_enc);
 
@@ -455,7 +474,8 @@ int mxml_write_value(MXML_WRITER *writer, const char *data)
    }
 
    strcpy(data_enc, data);
-   mxml_encode(data_enc, data_size);
+   if (writer->translate)
+      mxml_encode(data_enc, data_size);
    return mxml_write_line(writer, data_enc) == (int)strlen(data_enc);
 }
 
