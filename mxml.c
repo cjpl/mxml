@@ -37,6 +37,9 @@
    deleting nodes.
 
    $Log$
+   Revision 1.6  2005/03/29 15:11:56  ritt
+   Close element before writing comment
+
    Revision 1.5  2005/03/29 14:49:50  ritt
    Fixed compiler warning
 
@@ -505,15 +508,25 @@ int mxml_write_value(MXML_WRITER *writer, const char *data)
 int mxml_write_comment(MXML_WRITER *writer, const char *string)
 /* write a comment to an XML file, enclosed in "<!--" and "-->" */
 {
-   if (!writer->element_is_open)
+   int  i;
+   char line[1000];
+
+   if (writer->element_is_open) {
+      mxml_write_line(writer, ">\n");
+      writer->element_is_open = FALSE;
+   }
+
+   line[0] = 0;
+   for (i=0 ; i<writer->level ; i++)
+      strlcat(line, XML_INDENT, sizeof(line));
+
+   strlcat(line, "<!-- ", sizeof(line));
+   strlcat(line, string, sizeof(line));
+   strlcat(line, " -->\n", sizeof(line));
+   if (mxml_write_line(writer, line) != strlen(line))
       return FALSE;
 
-   if (mxml_write_line(writer, "<!-- ") != 5)
-      return FALSE;
-
-   mxml_write_line(writer, string);
-
-   return mxml_write_line(writer, " -->\n") == 5;
+   return TRUE;
 }
 
 /*------------------------------------------------------------------*/
@@ -1531,12 +1544,21 @@ void mxml_free_tree(PMXML_NODE tree)
 
 /*------------------------------------------------------------------*/
 
-/*
 void mxml_test()
 {
    char err[256];
    PMXML_NODE tree, *node;
    int i, n;
+   MXML_WRITER *writer;
+
+   writer = mxml_open_file("c:\\tmp\\test.xml");
+   mxml_start_element(writer, "odb");
+   mxml_start_element(writer, "dir");
+   mxml_write_value(writer, "contents");
+   mxml_end_element(writer);
+   mxml_write_comment(writer, "comment");
+   mxml_end_element(writer);
+   mxml_close_file(writer);
 
    tree = mxml_parse_file("c:\\online\\odb.xml", err, sizeof(err));
 
@@ -1551,4 +1573,3 @@ void mxml_test()
    mxml_debug_tree(tree, 0);
    mxml_free_tree(tree);
 }
-*/
