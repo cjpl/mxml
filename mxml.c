@@ -37,6 +37,9 @@
    deleting nodes.
 
    $Log$
+   Revision 1.3  2005/03/29 14:37:46  ritt
+   Translate '<' and '&' always in writer
+
    Revision 1.2  2005/03/29 14:14:38  ritt
    Implemented mxml_set_translate
 
@@ -252,7 +255,7 @@ MXML_WRITER *mxml_open_file(const char *file_name)
 
 /*------------------------------------------------------------------*/
 
-void mxml_encode(char *src, int size)
+void mxml_encode(char *src, int size, int translate)
 /* convert '<' '>' '&' '"' ''' into &xx; */
 {
    char *ps, *pd;
@@ -272,29 +275,45 @@ void mxml_encode(char *src, int size)
    ps = src;
    pd = buffer;
    for (ps = src ; *ps && (size_t)pd - (size_t)buffer < (size_t)(size-10) ; ps++) {
-      switch (*ps) {
-      case '<':
-         strcpy(pd, "&lt;");
-         pd += 4;
-         break;
-      case '>':
-         strcpy(pd, "&gt;");
-         pd += 4;
-         break;
-      case '&':
-         strcpy(pd, "&amp;");
-         pd += 5;
-         break;
-      case '\"':
-         strcpy(pd, "&quot;");
-         pd += 6;
-         break;
-      case '\'':
-         strcpy(pd, "&apos;");
-         pd += 6;
-         break;
-      default:
-         *pd++ = *ps;
+
+      if (translate) { // tranlate "<", ">", "&", """, "'"
+         switch (*ps) {
+         case '<':
+            strcpy(pd, "&lt;");
+            pd += 4;
+            break;
+         case '>':
+            strcpy(pd, "&gt;");
+            pd += 4;
+            break;
+         case '&':
+            strcpy(pd, "&amp;");
+            pd += 5;
+            break;
+         case '\"':
+            strcpy(pd, "&quot;");
+            pd += 6;
+            break;
+         case '\'':
+            strcpy(pd, "&apos;");
+            pd += 6;
+            break;
+         default:
+            *pd++ = *ps;
+         }
+      } else {
+         switch (*ps) { // translate only illegal XML characters "<" and "&"
+         case '<':
+            strcpy(pd, "&lt;");
+            pd += 4;
+            break;
+         case '&':
+            strcpy(pd, "&amp;");
+            pd += 5;
+            break;
+         default:
+            *pd++ = *ps;
+         }
       }
    }
    *pd = 0;
@@ -368,8 +387,7 @@ int mxml_start_element(MXML_WRITER *writer, const char *name)
       strlcat(line, XML_INDENT, sizeof(line));
    strlcat(line, "<", sizeof(line));
    strlcpy(name_enc, name, sizeof(name_enc));
-   if (writer->translate)
-      mxml_encode(name_enc, sizeof(name_enc));
+   mxml_encode(name_enc, sizeof(name_enc), writer->translate);
    strlcat(line, name_enc, sizeof(line));
 
    /* put element on stack */
@@ -438,11 +456,9 @@ int mxml_write_attribute(MXML_WRITER *writer, const char *name, const char *valu
       return FALSE;
 
    strcpy(name_enc, name);
-   if (writer->translate)
-      mxml_encode(name_enc, sizeof(name_enc));
+   mxml_encode(name_enc, sizeof(name_enc), writer->translate);
    strcpy(val_enc, value);
-   if (writer->translate)
-      mxml_encode(val_enc, sizeof(val_enc));
+   mxml_encode(val_enc, sizeof(val_enc), writer->translate);
 
    sprintf(line, " %s=\"%s\"", name_enc, val_enc);
 
@@ -474,8 +490,7 @@ int mxml_write_value(MXML_WRITER *writer, const char *data)
    }
 
    strcpy(data_enc, data);
-   if (writer->translate)
-      mxml_encode(data_enc, data_size);
+   mxml_encode(data_enc, data_size, writer->translate);
    return mxml_write_line(writer, data_enc) == (int)strlen(data_enc);
 }
 
