@@ -6,8 +6,11 @@
    Contents:     Header file for mxml.c
 
    $Log$
-   Revision 1.1  2005/03/29 08:19:45  ritt
-   Initial revision
+   Revision 1.2  2005/03/29 14:14:38  ritt
+   Implemented mxml_set_translate
+
+   Revision 1.1.1.1  2005/03/29 08:19:45  ritt
+   Imported sources
 
 \********************************************************************/
 
@@ -30,6 +33,7 @@ typedef struct {
    int element_is_open;
    int data_was_written;
    char **stack;
+   int  translate;
 } MXML_WRITER;
 
 typedef struct mxml_struct *PMXML_NODE;
@@ -51,6 +55,7 @@ typedef struct mxml_struct {
 
 MXML_WRITER *mxml_open_file(const char *file_name);
 MXML_WRITER *mxml_open_buffer(void); 
+int mxml_set_translate(MXML_WRITER *writer, int flag);
 int mxml_start_element(MXML_WRITER *writer, const char *name);
 int mxml_end_element(MXML_WRITER *writer); 
 int mxml_write_attribute(MXML_WRITER *writer, const char *name, const char *value);
