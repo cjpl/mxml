@@ -37,6 +37,9 @@
    deleting nodes.
 
    $Log$
+   Revision 1.7  2005/04/06 11:17:02  ritt
+   Nodes can now have values AND subnodes
+
    Revision 1.6  2005/03/29 15:11:56  ritt
    Close element before writing comment
 
@@ -380,7 +383,7 @@ int mxml_set_translate(MXML_WRITER *writer, int flag)
 }
 /*------------------------------------------------------------------*/
 
-int mxml_start_element(MXML_WRITER *writer, const char *name)
+int mxml_start_element1(MXML_WRITER *writer, const char *name, int indent)
 /* start a new XML element, must be followed by mxml_end_elemnt */
 {
    int i;
@@ -392,8 +395,9 @@ int mxml_start_element(MXML_WRITER *writer, const char *name)
    }
 
    line[0] = 0;
-   for (i=0 ; i<writer->level ; i++)
-      strlcat(line, XML_INDENT, sizeof(line));
+   if (indent)
+      for (i=0 ; i<writer->level ; i++)
+         strlcat(line, XML_INDENT, sizeof(line));
    strlcat(line, "<", sizeof(line));
    strlcpy(name_enc, name, sizeof(name_enc));
    mxml_encode(name_enc, sizeof(name_enc), writer->translate);
@@ -412,6 +416,20 @@ int mxml_start_element(MXML_WRITER *writer, const char *name)
    writer->data_was_written = FALSE;
 
    return mxml_write_line(writer, line) == (int)strlen(line);
+}
+
+/*------------------------------------------------------------------*/
+
+int mxml_start_element(MXML_WRITER *writer, const char *name)
+{
+   return mxml_start_element1(writer, name, TRUE);
+}
+
+/*------------------------------------------------------------------*/
+
+int mxml_start_element_noindent(MXML_WRITER *writer, const char *name)
+{
+   return mxml_start_element1(writer, name, FALSE);
 }
 
 /*------------------------------------------------------------------*/
@@ -628,7 +646,7 @@ PMXML_NODE mxml_add_special_node_at(PMXML_NODE parent, int node_type, char *node
    
    parent->n_children++;
 
-   if (value) {
+   if (value && *value) {
       pnode->value = (char *)malloc(strlen(value)+1);
       assert(pnode->value);
       strcpy(pnode->value, value);
@@ -1425,23 +1443,23 @@ PMXML_NODE mxml_parse_file(char *file_name, char *error, int error_size)
 
 /*------------------------------------------------------------------*/
 
-int mxml_write_subtree(MXML_WRITER *writer, PMXML_NODE tree)
+int mxml_write_subtree(MXML_WRITER *writer, PMXML_NODE tree, int indent)
 /* write complete subtree recursively into file opened with mxml_open_document() */
 {
    int i;
 
-   mxml_start_element(writer, tree->name);
+   mxml_start_element1(writer, tree->name, indent);
    for (i=0 ; i<tree->n_attributes ; i++)
       if (!mxml_write_attribute(writer, tree->attribute_name+i*MXML_NAME_LENGTH, tree->attribute_value[i]))
          return FALSE;
-   if (tree->value) {
+   
+   if (tree->value)
       if (!mxml_write_value(writer, tree->value))
          return FALSE;
-   } else {
-      for (i=0 ; i<tree->n_children ; i++)
-         if (!mxml_write_subtree(writer, &tree->child[i]))
-            return FALSE;
-   }
+
+   for (i=0 ; i<tree->n_children ; i++)
+      if (!mxml_write_subtree(writer, &tree->child[i], (tree->value == NULL) || i > 0))
+         return FALSE;
 
    return mxml_end_element(writer);
 }
@@ -1461,7 +1479,7 @@ int mxml_write_tree(char *file_name, PMXML_NODE tree)
 
    for (i=0 ; i<tree->n_children ; i++)
       if (tree->child[i].node_type == ELEMENT_NODE) // skip PI and comments
-         if (!mxml_write_subtree(writer, &tree->child[i]))
+         if (!mxml_write_subtree(writer, &tree->child[i], TRUE))
             return FALSE;
 
    if (!mxml_close_file(writer))
@@ -1543,33 +1561,3 @@ void mxml_free_tree(PMXML_NODE tree)
 }
 
 /*------------------------------------------------------------------*/
-
-void mxml_test()
-{
-   char err[256];
-   PMXML_NODE tree, *node;
-   int i, n;
-   MXML_WRITER *writer;
-
-   writer = mxml_open_file("c:\\tmp\\test.xml");
-   mxml_start_element(writer, "odb");
-   mxml_start_element(writer, "dir");
-   mxml_write_value(writer, "contents");
-   mxml_end_element(writer);
-   mxml_write_comment(writer, "comment");
-   mxml_end_element(writer);
-   mxml_close_file(writer);
-
-   tree = mxml_parse_file("c:\\online\\odb.xml", err, sizeof(err));
-
-   node = NULL;
-   n = mxml_find_nodes(tree, "/odb/dir[@name=\"Experiment\"]/dir[@name='Run Parameters']/key[@name='Comment']", &node);
-   for (i=0 ; i<n ; i++)
-      printf("%s\n", node[i]->value);
-
-   mxml_debug_tree(*node, 0);
-   free(node);
-
-   mxml_debug_tree(tree, 0);
-   mxml_free_tree(tree);
-}
