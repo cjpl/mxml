@@ -37,6 +37,9 @@
    deleting nodes.
 
    $Log$
+   Revision 1.5  2005/03/29 14:49:50  ritt
+   Fixed compiler warning
+
    Revision 1.4  2005/03/29 14:48:54  ritt
    Implemented mxml_write_comment()
 
@@ -502,9 +505,6 @@ int mxml_write_value(MXML_WRITER *writer, const char *data)
 int mxml_write_comment(MXML_WRITER *writer, const char *string)
 /* write a comment to an XML file, enclosed in "<!--" and "-->" */
 {
-   static char *data_enc;
-   static int data_size = 0;
-
    if (!writer->element_is_open)
       return FALSE;
 
