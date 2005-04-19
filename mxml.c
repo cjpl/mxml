@@ -37,6 +37,9 @@
    deleting nodes.
 
    $Log$
+   Revision 1.8  2005/04/19 21:43:33  ritt
+   Implemented tree cloning and adding
+
    Revision 1.7  2005/04/06 11:17:02  ritt
    Nodes can now have values AND subnodes
 
@@ -681,6 +684,69 @@ PMXML_NODE mxml_add_node_at(PMXML_NODE parent, char *node_name, char *value, int
 
 /*------------------------------------------------------------------*/
 
+int mxml_add_tree_at(PMXML_NODE parent, PMXML_NODE tree, int index)
+/* add a whole node tree to an existing parent node at a specific position */
+{
+   PMXML_NODE pchild;
+   int i, j;
+
+   assert(parent);
+   assert(tree);
+   if (parent->n_children == 0)
+      parent->child = (PMXML_NODE)malloc(sizeof(MXML_NODE));
+   else {
+      pchild = parent->child;
+      parent->child = (PMXML_NODE)realloc(parent->child, sizeof(MXML_NODE)*(parent->n_children+1));
+
+      if (parent->child != pchild) {
+         /* correct parent pointer for children */
+         for (i=0 ; i<parent->n_children ; i++) {
+            pchild = parent->child+i;
+            for (j=0 ; j<pchild->n_children ; j++)
+               pchild->child[j].parent = pchild;
+         }
+      }
+   }
+   assert(parent->child);
+
+   if (index < parent->n_children) 
+      for (i=parent->n_children ; i > index ; i--) {
+         /* move following nodes one down */
+         memcpy(&parent->child[i], &parent->child[i-1], sizeof(MXML_NODE));
+
+         /* correct parent pointer for children */
+         for (i=0 ; i<parent->n_children ; i++) {
+            pchild = parent->child+i;
+            for (j=0 ; j<pchild->n_children ; j++)
+               pchild->child[j].parent = pchild;
+         }
+      }
+
+   /* initialize new node */
+   memcpy(parent->child+index, tree, sizeof(MXML_NODE));
+   parent->n_children++;
+   parent->child[index].parent = parent;
+
+   /* correct parent pointer for children */
+   for (i=0 ; i<parent->n_children ; i++) {
+      pchild = parent->child+i;
+      for (j=0 ; j<pchild->n_children ; j++)
+         pchild->child[j].parent = pchild;
+   }
+
+   return TRUE;
+}
+
+/*------------------------------------------------------------------*/
+
+int mxml_add_tree(PMXML_NODE parent, PMXML_NODE tree)
+/* add a whole node tree to an existing parent node at the end */
+{
+   return mxml_add_tree_at(parent, tree, parent->n_children);
+}
+
+/*------------------------------------------------------------------*/
+
 int mxml_add_attribute(PMXML_NODE pnode, char *attrib_name, char *attrib_value)
 /* add an attribute to an existing node */
 {
@@ -954,10 +1020,14 @@ int mxml_replace_node_value(PMXML_NODE pnode, char *value)
 {
    if (pnode->value)
       pnode->value = (char *)realloc(pnode->value, strlen(value)+1);
-   else
+   else if (value)
       pnode->value = (char *)malloc(strlen(value)+1);
+   else
+      pnode->value = NULL;
    
-   strcpy(pnode->value, value);
+   if (value)
+      strcpy(pnode->value, value);
+
    return TRUE;
 }
 
@@ -1490,6 +1560,34 @@ int mxml_write_tree(char *file_name, PMXML_NODE tree)
 
 /*------------------------------------------------------------------*/
 
+PMXML_NODE mxml_clone_tree(PMXML_NODE tree)
+{
+   PMXML_NODE clone;
+   int i;
+
+   clone = (PMXML_NODE)calloc(sizeof(MXML_NODE), 1);
+
+   /* copy name, node_type, n_attributes and n_children */
+   memcpy(clone, tree, sizeof(MXML_NODE));
+
+   clone->value = NULL;
+   mxml_replace_node_value(clone, tree->value);
+
+   clone->attribute_name = NULL;
+   clone->attribute_value = NULL;
+   for (i=0 ; i<tree->n_attributes ; i++)
+      mxml_add_attribute(clone, tree->attribute_name+i*MXML_NAME_LENGTH, tree->attribute_value[i]);
+
+   clone->child = NULL;
+   clone->n_children = 0;
+   for (i=0 ; i<tree->n_children ; i++)
+      mxml_add_tree(clone, mxml_clone_tree(mxml_subnode(tree, i)));
+
+   return clone;
+}
+
+/*------------------------------------------------------------------*/
+
 void mxml_debug_tree(PMXML_NODE tree, int level)
 /* print XML tree for debugging */
 {
@@ -1561,3 +1659,27 @@ void mxml_free_tree(PMXML_NODE tree)
 }
 
 /*------------------------------------------------------------------*/
+
+/*
+void mxml_test()
+{
+   char err[256];
+   PMXML_NODE tree, tree2, node;
+
+   tree = mxml_parse_file("c:\\tmp\\test.xml", err, sizeof(err));
+   tree2 = mxml_clone_tree(tree);
+
+   printf("Orig:\n");
+   mxml_debug_tree(tree, 0);
+
+   printf("\nClone:\n");
+   mxml_debug_tree(tree2, 0);
+
+   printf("\nCombined:\n");
+   node = mxml_find_node(tree2, "cddb"); 
+   mxml_add_tree(tree, node);
+   mxml_debug_tree(tree, 0);
+
+   mxml_free_tree(tree);
+}
+*/
