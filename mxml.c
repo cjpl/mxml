@@ -37,6 +37,9 @@
    deleting nodes.
 
    $Log$
+   Revision 1.10  2005/05/09 18:43:52  ritt
+   Clear error
+
    Revision 1.9  2005/05/09 09:12:25  ritt
    Moved strlcpy/strlcat into separate file
 
@@ -1408,6 +1411,9 @@ PMXML_NODE mxml_parse_file(char *file_name, char *error, int error_size)
    char *buf, line[1000];
    int fh, length;
    PMXML_NODE root;
+
+   if (error)
+      error[0] = 0;
 
    fh = open(file_name, O_RDONLY | O_TEXT, 0644);
 
