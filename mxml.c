@@ -37,6 +37,9 @@
    deleting nodes.
 
    $Log$
+   Revision 1.9  2005/05/09 09:12:25  ritt
+   Moved strlcpy/strlcat into separate file
+
    Revision 1.8  2005/04/19 21:43:33  ritt
    Implemented tree cloning and adding
 
@@ -95,82 +98,9 @@
 #endif
 
 #include "mxml.h"
+#include "strlcpy.h"
 
 #define XML_INDENT "  "
-
-/*------------------------------------------------------------------*/
-
-#ifdef HAVE_STRLCPY
-
-extern size_t strlcpy(char *dst, const char *src, size_t size);
-extern size_t strlcat(char *dst, const char *src, size_t size);
-
-#else
-
-/*
- * Copy src to string dst of size siz.  At most siz-1 characters
- * will be copied.  Always NUL terminates (unless size == 0).
- * Returns strlen(src); if retval >= siz, truncation occurred.
- */
-size_t strlcpy(char *dst, const char *src, size_t size)
-{
-   char *d = dst;
-   const char *s = src;
-   size_t n = size;
-
-   /* Copy as many bytes as will fit */
-   if (n != 0 && --n != 0) {
-      do {
-         if ((*d++ = *s++) == 0)
-            break;
-      } while (--n != 0);
-   }
-
-   /* Not enough room in dst, add NUL and traverse rest of src */
-   if (n == 0) {
-      if (size != 0)
-         *d = '\0';             /* NUL-terminate dst */
-      while (*s++);
-   }
-
-   return (s - src - 1);        /* count does not include NUL */
-}
-
-/*
- * Appends src to string dst of size siz (unlike strncat, siz is the
- * full size of dst, not space left).  At most siz-1 characters
- * will be copied.  Always NUL terminates (unless size <= strlen(dst)).
- * Returns strlen(src) + MIN(size, strlen(initial dst)).
- * If retval >= size, truncation occurred.
- */
-size_t strlcat(char *dst, const char *src, size_t size)
-{
-   char *d = dst;
-   const char *s = src;
-   size_t n = size;
-   size_t dlen;
-
-   /* Find the end of dst and adjust bytes left but don't go past end */
-   while (n-- != 0 && *d != '\0')
-      d++;
-   dlen = d - dst;
-   n = size - dlen;
-
-   if (n == 0)
-      return (dlen + strlen(s));
-   while (*s != '\0') {
-      if (n != 1) {
-         *d++ = *s;
-         n--;
-      }
-      s++;
-   }
-   *d = '\0';
-
-   return (dlen + (s - src));   /* count does not include NUL */
-}
-
-#endif // STRLCPY_DEFINED
 
 /*------------------------------------------------------------------*/
 
@@ -544,7 +474,7 @@ int mxml_write_comment(MXML_WRITER *writer, const char *string)
    strlcat(line, "<!-- ", sizeof(line));
    strlcat(line, string, sizeof(line));
    strlcat(line, " -->\n", sizeof(line));
-   if (mxml_write_line(writer, line) != strlen(line))
+   if (mxml_write_line(writer, line) != (int)strlen(line))
       return FALSE;
 
    return TRUE;
