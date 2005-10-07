@@ -94,7 +94,7 @@ int mxml_delete_attribute(PMXML_NODE, char *attrib_name);
 PMXML_NODE mxml_create_root_node();
 PMXML_NODE mxml_parse_file(char *file_name, char *error, int error_size);
 PMXML_NODE mxml_parse_buffer(char *buffer, char *error, int error_size);
-PMXML_NODE mxml_parse_entity(char **buf, char *error, int error_size);
+PMXML_NODE mxml_parse_entity(char **buf, char* file_name, char *error, int error_size);
 int mxml_write_tree(char *file_name, PMXML_NODE tree);
 void mxml_debug_tree(PMXML_NODE tree, int level);
 void mxml_free_tree(PMXML_NODE tree);
