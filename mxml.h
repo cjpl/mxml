@@ -5,21 +5,7 @@
 
    Contents:     Header file for mxml.c
 
-   $Log$
-   Revision 1.5  2005/04/19 21:43:33  ritt
-   Implemented tree cloning and adding
-
-   Revision 1.4  2005/04/06 11:17:02  ritt
-   Nodes can now have values AND subnodes
-
-   Revision 1.3  2005/03/29 14:48:54  ritt
-   Implemented mxml_write_comment()
-
-   Revision 1.2  2005/03/29 14:14:38  ritt
-   Implemented mxml_set_translate
-
-   Revision 1.1.1.1  2005/03/29 08:19:45  ritt
-   Imported sources
+   $Id:$
 
 \********************************************************************/
 
