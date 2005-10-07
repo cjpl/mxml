@@ -1098,7 +1098,7 @@ PMXML_NODE mxml_parse_buffer(char *buf, char *error, int error_size)
 {
    char node_name[256], attrib_name[256], attrib_value[1000];
    char *p, *pv;
-   int i, line_number;
+   int i,j, line_number;
    PMXML_NODE root, ptree, pnew;
    int end_element;
    size_t len;
@@ -1177,27 +1177,23 @@ PMXML_NODE mxml_parse_buffer(char *buf, char *error, int error_size)
 
             p += 2;
 
-         } else if (strncmp(p, "!ENTITY", 7) == 0) {
+         } else if (strncmp(p, "!DOCTYPE", 8) == 0 ) {
 
-            /* found !ENTITY element */
-            pnew = mxml_add_special_node(ptree, ENTITY_NODE, "ENTYTY", NULL);
-            pv = p + 1;
-
-            p++;
+            /* found !DOCTYPE element , skip it */
+            p += 8;
             if (strstr(p, ">") == NULL)
-               return read_error(HERE, "Unterminated !ENTITY element");
+               return read_error(HERE, "Unterminated !DOCTYPE element");
 
-            while (*p != '>') {
+            j = 0;
+            while (*p != '>' || j > 0) {
                if (*p == '\n')
                   line_number++;
+               else if (*p == '<')
+                  j++;
+               else if (*p == '>')
+                  j--;
                p++;
             }
-
-            len = (size_t)p - (size_t)pv;
-            pnew->value = (char *)malloc(len+1);
-            memcpy(pnew->value, pv, len);
-            pnew->value[len] = 0;
-            mxml_decode(pnew->value);
 
             p ++;
 
@@ -1432,13 +1428,23 @@ PMXML_NODE mxml_parse_entity(char **buf, char *error, int error_size)
       return read_error(HERE, "Cannot allocate memory.");
    }
    strcpy(buffer, *buf);
+
+   p = strstr(buffer,"!DOCTYPE");
+   if(p == NULL) /* no entities */
+      return root;
+
+   pv = strstr(p,"[");
+   if(pv == NULL) /* no entities */
+      return root;
+
    free(*buf);
-
-   p = buffer;
-
+   p = pv + 1;
 
    /* search !ENTITY */
    do {
+      if (*p == ']')
+         break;
+
       if (*p == '<') {
 
          /* found new entity */

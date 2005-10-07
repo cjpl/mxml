@@ -18,7 +18,6 @@
 #define PROCESSING_INSTRUCTION_NODE   3
 #define COMMENT_NODE                  4
 #define DOCUMENT_NODE                 5
-#define ENTITY_NODE                   6
 
 #define INTERNAL_ENTITY               0
 #define EXTERNAL_ENTITY               1
