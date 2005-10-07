@@ -1767,7 +1767,7 @@ PMXML_NODE mxml_parse_entity(char **buf, char *error, int error_size)
    for (i = 0; i < nentity; i++) {
       p = buffer;
       while (1) {
-         pv = strstr(entity_name[i], p);
+         pv = strstr(p, entity_name[i]);
          if (pv) {
             length += -strlen(entity_name[i]) + strlen(entity_value[i]);
             p = pv + 1;
