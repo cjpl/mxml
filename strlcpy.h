@@ -5,9 +5,7 @@
 
    Contents:     Header file for strlcpy.c
 
-   $Log$
-   Revision 1.1  2005/05/09 09:12:06  ritt
-   Initial revision
+   $Id:$
 
 \********************************************************************/
 

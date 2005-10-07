@@ -36,36 +36,7 @@
    in the tree and for manipulating nodes, like replacing, adding and
    deleting nodes.
 
-   $Log$
-   Revision 1.10  2005/05/09 18:43:52  ritt
-   Clear error
-
-   Revision 1.9  2005/05/09 09:12:25  ritt
-   Moved strlcpy/strlcat into separate file
-
-   Revision 1.8  2005/04/19 21:43:33  ritt
-   Implemented tree cloning and adding
-
-   Revision 1.7  2005/04/06 11:17:02  ritt
-   Nodes can now have values AND subnodes
-
-   Revision 1.6  2005/03/29 15:11:56  ritt
-   Close element before writing comment
-
-   Revision 1.5  2005/03/29 14:49:50  ritt
-   Fixed compiler warning
-
-   Revision 1.4  2005/03/29 14:48:54  ritt
-   Implemented mxml_write_comment()
-
-   Revision 1.3  2005/03/29 14:37:46  ritt
-   Translate '<' and '&' always in writer
-
-   Revision 1.2  2005/03/29 14:14:38  ritt
-   Implemented mxml_set_translate
-
-   Revision 1.1.1.1  2005/03/29 08:19:45  ritt
-   Imported sources
+   $Id:$
 
 \********************************************************************/
 
