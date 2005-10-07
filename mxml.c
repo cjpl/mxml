@@ -44,6 +44,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <assert.h>
+#include <libgen.h>
 
 #ifdef _MSC_VER
 
@@ -1185,7 +1186,7 @@ PMXML_NODE mxml_parse_buffer(char *buf, char *error, int error_size)
                return read_error(HERE, "Unterminated !DOCTYPE element");
 
             j = 0;
-            while (*p != '>' || j > 0) {
+            while (*p && *p != '>' || j > 0) {
                if (*p == '\n')
                   line_number++;
                else if (*p == '<')
@@ -1194,8 +1195,10 @@ PMXML_NODE mxml_parse_buffer(char *buf, char *error, int error_size)
                   j--;
                p++;
             }
+            if (!*p)
+               return read_error(HERE, "Unexpected end of file");
 
-            p ++;
+            p++;
 
          } else {
             
@@ -1395,7 +1398,7 @@ PMXML_NODE mxml_parse_buffer(char *buf, char *error, int error_size)
 
 /*------------------------------------------------------------------*/
 
-PMXML_NODE mxml_parse_entity(char **buf, char *error, int error_size)
+PMXML_NODE mxml_parse_entity(char **buf, char *file_name, char *error, int error_size)
 /* parse !ENTYTY entries of XML files and replace with references. Return NULL
    in case of error, return error description. Optional file_name is used
    for error reporting if called from mxml_parse_file() */
@@ -1413,14 +1416,17 @@ PMXML_NODE mxml_parse_entity(char **buf, char *error, int error_size)
    int fh, length, len;
    char *buffer;
    PMXML_NODE root = mxml_create_root_node();   /* dummy for 'HERE' */
-   char *file_name = NULL;      /* dummy for 'HERE' */
    int ip;                      /* counter for entity value */
+   char directoryname[FILENAME_MAX];
+   char filename[FILENAME_MAX];
 
    for (ip = 0; ip < MXML_MAX_ENTITY; ip++)
       entity_value[ip] = NULL;
 
    line_number = 1;
    nentity = -1;
+
+   strcpy(directoryname, dirname(file_name));
 
    /* copy string to temporary space */
    buffer = (char *) malloc(strlen(*buf) + 1);
@@ -1429,12 +1435,12 @@ PMXML_NODE mxml_parse_entity(char **buf, char *error, int error_size)
    }
    strcpy(buffer, *buf);
 
-   p = strstr(buffer,"!DOCTYPE");
-   if(p == NULL) /* no entities */
+   p = strstr(buffer, "!DOCTYPE");
+   if (p == NULL)               /* no entities */
       return root;
 
-   pv = strstr(p,"[");
-   if(pv == NULL) /* no entities */
+   pv = strstr(p, "[");
+   if (pv == NULL)              /* no entities */
       return root;
 
    free(*buf);
@@ -1709,7 +1715,8 @@ PMXML_NODE mxml_parse_entity(char **buf, char *error, int error_size)
    /* read external file */
    for (i = 0; i < nentity; i++) {
       if (entity_type[i] == EXTERNAL_ENTITY) {
-         fh = open(entity_reference_name[i], O_RDONLY | O_TEXT, 0644);
+         sprintf(filename, "%s/%s", directoryname, entity_reference_name[i]);
+         fh = open(filename, O_RDONLY | O_TEXT, 0644);
 
          if (fh == -1) {
             entity_value[i] =
@@ -1754,7 +1761,7 @@ PMXML_NODE mxml_parse_entity(char **buf, char *error, int error_size)
                close(fh);
 
                /* recursive parse */
-               root = mxml_parse_entity(&entity_value[i], error, error_size);
+               root = mxml_parse_entity(&entity_value[i], filename, error, error_size);
                if (root == NULL) {
 /*
                   free(buffer);
@@ -1858,7 +1865,7 @@ PMXML_NODE mxml_parse_file(char *file_name, char *error, int error_size)
    buf[length] = 0;
    close(fh);
 
-   root = mxml_parse_entity(&buf, error, error_size);
+   root = mxml_parse_entity(&buf, file_name, error, error_size);
    if (root == NULL) {
       free(buf);
       return root;
