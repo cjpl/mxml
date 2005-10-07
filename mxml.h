@@ -5,7 +5,7 @@
 
    Contents:     Header file for mxml.c
 
-   $Id:$
+   $Id$
 
 \********************************************************************/
 
@@ -18,6 +18,11 @@
 #define PROCESSING_INSTRUCTION_NODE   3
 #define COMMENT_NODE                  4
 #define DOCUMENT_NODE                 5
+#define ENTITY_NODE                   6
+
+#define INTERNAL_ENTITY               0
+#define EXTERNAL_ENTITY               1
+#define MXML_MAX_ENTITY            1000
 
 typedef struct {
    int  fh;
@@ -90,6 +95,7 @@ int mxml_delete_attribute(PMXML_NODE, char *attrib_name);
 PMXML_NODE mxml_create_root_node();
 PMXML_NODE mxml_parse_file(char *file_name, char *error, int error_size);
 PMXML_NODE mxml_parse_buffer(char *buffer, char *error, int error_size);
+PMXML_NODE mxml_parse_entity(char **buf, char *error, int error_size);
 int mxml_write_tree(char *file_name, PMXML_NODE tree);
 void mxml_debug_tree(PMXML_NODE tree, int level);
 void mxml_free_tree(PMXML_NODE tree);
