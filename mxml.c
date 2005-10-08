@@ -1118,7 +1118,7 @@ PMXML_NODE mxml_parse_buffer(char *buf, char *error, int error_size)
          end_element = FALSE;
 
          /* found new element */
-         *p++;
+         p++;
          while (*p && isspace(*p)) {
             if (*p == '\n')
                line_number++;
