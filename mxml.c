@@ -2090,7 +2090,7 @@ char* mxml_dirname(char* path)
    pv = strrchr (path, ':');
    if( pv > p )
       p = pv;
-   p = strrchr (path, '\\');
+   pv = strrchr (path, '\\');
    if( pv > p )
       p = pv;
 #endif
@@ -2107,7 +2107,7 @@ char* mxml_dirname(char* path)
       newpath = (char *) malloc(2);
       if (newpath == 0)
          return NULL;
-      newpath[0] = '/';
+      newpath[0] = *p;
       newpath[1] = 0;
    }
    else
