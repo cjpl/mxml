@@ -99,4 +99,6 @@ int mxml_write_tree(char *file_name, PMXML_NODE tree);
 void mxml_debug_tree(PMXML_NODE tree, int level);
 void mxml_free_tree(PMXML_NODE tree);
 
+char* mxml_dirname(char* path);
+char* mxml_basename(char *path);
 /*------------------------------------------------------------------*/
