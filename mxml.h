@@ -23,6 +23,12 @@
 #define EXTERNAL_ENTITY               1
 #define MXML_MAX_ENTITY            1000
 
+#ifdef _MSC_VER
+#define DIR_SEPARATOR              '\\'
+#else
+#define DIR_SEPARATOR               '/'
+#endif
+
 typedef struct {
    int  fh;
    char *buffer;

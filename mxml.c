@@ -1727,7 +1727,7 @@ int mxml_parse_entity(char **buf, char *file_name, char *error, int error_size)
    /* read external file */
    for (i = 0; i < nentity; i++) {
       if (entity_type[i] == EXTERNAL_ENTITY) {
-         sprintf(filename, "%s/%s", directoryname, entity_reference_name[i]);
+         sprintf(filename, "%s%c%s", directoryname, DIR_SEPARATOR, entity_reference_name[i]);
          fh = open(filename, O_RDONLY | O_TEXT, 0644);
 
          if (fh == -1) {
