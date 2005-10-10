@@ -1792,7 +1792,7 @@ int mxml_parse_entity(char **buf, char *file_name, char *error, int error_size)
       while (1) {
          pv = strstr(p, entity_name[i]);
          if (pv) {
-            length += -strlen(entity_name[i]) + strlen(entity_value[i]);
+            length += strlen(entity_value[i]) - strlen(entity_name[i]);
             p = pv + 1;
          } else {
             break;
