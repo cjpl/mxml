@@ -35,8 +35,8 @@ typedef struct {
    int  buffer_size;
    int  buffer_len;
    int  level;
-   int element_is_open;
-   int data_was_written;
+   int  element_is_open;
+   int  data_was_written;
    char **stack;
    int  translate;
 } MXML_WRITER;
