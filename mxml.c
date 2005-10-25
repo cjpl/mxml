@@ -352,9 +352,8 @@ int mxml_end_element(MXML_WRITER *writer)
       free(writer->stack[writer->level]);
       if (writer->level == 0)
          free(writer->stack);
-      if (write(writer->fh, "/>\n", 3) != 3)
-         return FALSE;
-      return TRUE;
+      strcpy(line, "/>\n");
+      return mxml_write_line(writer, line) == (int)strlen(line);
    }
 
    line[0] = 0;
