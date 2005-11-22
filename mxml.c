@@ -723,8 +723,11 @@ int mxml_find_nodes1(PMXML_NODE tree, char *xml_path, PMXML_NODE **nodelist, int
 */
 {
    PMXML_NODE pnode;
-   char *p1, *p2, *p3, node_name[256], condition[256], subnode[256], cond_attr[256], value[256];
-   int i, j, index;
+   char *p1, *p2, *p3, node_name[256], condition[256];
+   char cond_name[MXML_MAX_CONDITION][256], cond_value[MXML_MAX_CONDITION][256];
+   int  cond_type[MXML_MAX_CONDITION];
+   int i, j, k, index, num_cond;
+   int cond_satisfied;
    size_t len;
 
    p1 = xml_path;
@@ -745,8 +748,9 @@ int mxml_find_nodes1(PMXML_NODE tree, char *xml_path, PMXML_NODE **nodelist, int
       memcpy(node_name, p1, len);
       node_name[len] = 0;
       index = 0;
-      subnode[0] = cond_attr[0] = value[0] = 0;
-      if (*p2 == '[') {
+      num_cond = 0;
+      while (*p2 == '[') {
+         cond_name[num_cond][0] = cond_value[num_cond][0] = cond_type[num_cond] = 0;
          p2++;
          if (isdigit(*p2)) {
             /* evaluate [index] */
@@ -767,57 +771,61 @@ int mxml_find_nodes1(PMXML_NODE tree, char *xml_path, PMXML_NODE **nodelist, int
             p2 = strchr(p2, ']')+1;
             if ((p3 = strchr(condition, '=')) != NULL) {
 
-               if (condition[0] == '@') {
-                  strlcpy(cond_attr, condition+1, sizeof(cond_attr));
-                  *strchr(cond_attr, '=') = 0;
-                  while (cond_attr[0] && isspace(cond_attr[strlen(cond_attr)-1]))
-                     cond_attr[strlen(cond_attr)-1] = 0;
-               } else {
-                  strlcpy(subnode, condition, sizeof(subnode));
-                  *strchr(subnode, '=') = 0;
-                  while (subnode[0] && isspace(subnode[strlen(subnode)-1]))
-                     subnode[strlen(subnode)-1] = 0;
-               }
+               if (condition[0] == '@')
+                  cond_type[num_cond] = 1;
+
+               strlcpy(cond_name[num_cond], condition, sizeof(cond_name[num_cond]));
+               *strchr(cond_name[num_cond], '=') = 0;
+               while (cond_name[num_cond][0] && isspace(cond_name[num_cond][strlen(cond_name[num_cond])-1]))
+                  cond_name[num_cond][strlen(cond_name[num_cond])-1] = 0;
+
                p3++;
                while (*p3 && isspace(*p3))
                   p3++;
                if (*p3 == '\"') {
-                  strlcpy(value, p3+1, sizeof(value));
-                  while (value[0] && isspace(value[strlen(value)-1]))
-                     value[strlen(value)-1] = 0;
-                  if (value[0] && value[strlen(value)-1] == '\"')
-                     value[strlen(value)-1] = 0;
+                  strlcpy(cond_value[num_cond], p3+1, sizeof(cond_value[num_cond]));
+                  while (cond_value[num_cond][0] && isspace(cond_value[num_cond][strlen(cond_value[num_cond])-1]))
+                     cond_value[num_cond][strlen(cond_value[num_cond])-1] = 0;
+                  if (cond_value[num_cond][0] && cond_value[num_cond][strlen(cond_value[num_cond])-1] == '\"')
+                     cond_value[num_cond][strlen(cond_value[num_cond])-1] = 0;
                } else if (*p3 == '\'') {
-                  strlcpy(value, p3+1, sizeof(value));
-                  while (value[0] && isspace(value[strlen(value)-1]))
-                     value[strlen(value)-1] = 0;
-                  if (value[0] && value[strlen(value)-1] == '\'')
-                     value[strlen(value)-1] = 0;
+                  strlcpy(cond_value[num_cond], p3+1, sizeof(cond_value[num_cond]));
+                  while (cond_value[num_cond][0] && isspace(cond_value[num_cond][strlen(cond_value[num_cond])-1]))
+                     cond_value[num_cond][strlen(cond_value[num_cond])-1] = 0;
+                  if (cond_value[num_cond][0] && cond_value[num_cond][strlen(cond_value[num_cond])-1] == '\'')
+                     cond_value[num_cond][strlen(cond_value[num_cond])-1] = 0;
                } else {
-                  strlcpy(value, p3, sizeof(value));
-                  while (value[0] && isspace(value[strlen(value)-1]))
-                     value[strlen(value)-1] = 0;
+                  strlcpy(cond_value[num_cond], p3, sizeof(cond_value[num_cond]));
+                  while (cond_value[num_cond][0] && isspace(cond_value[num_cond][strlen(cond_value[num_cond])-1]))
+                     cond_value[num_cond][strlen(cond_value[num_cond])-1] = 0;
                }
+               num_cond++;
             }
          }
       }
 
       for (i=j=0 ; i<pnode->n_children ; i++) {
-         if (subnode[0]) {
-            /* search subnode */
-            for (j=0 ; j<pnode->child[i].n_children ; j++)
-               if (strcmp(pnode->child[i].child[j].name, subnode) == 0)
-                  if (strcmp(pnode->child[i].child[j].value, value) == 0)
-                     if (!mxml_add_resultnode(pnode->child+i, p2, nodelist, found))
-                        return 0;
-
-         } else if (cond_attr[0]) {
-            /* search node with attribute */
-            if (strcmp(pnode->child[i].name, node_name) == 0)
-               if (mxml_get_attribute(pnode->child+i, cond_attr) &&
-                  strcmp(mxml_get_attribute(pnode->child+i, cond_attr), value) == 0)
-                  if (!mxml_add_resultnode(pnode->child+i, p2, nodelist, found))
-                     return 0;
+         if (num_cond) {
+            cond_satisfied = 0;
+            for (k=0;k<num_cond;k++) {
+               if (cond_type[k]) {
+                  /* search node with attribute */
+                  if (strcmp(pnode->child[i].name, node_name) == 0)
+                     if (mxml_get_attribute(pnode->child+i, cond_name[k]) &&
+                        strcmp(mxml_get_attribute(pnode->child+i, cond_name[k]), cond_value[k]) == 0)
+                        cond_satisfied++;
+               }
+               else {
+                  /* search subnode */
+                  for (j=0 ; j<pnode->child[i].n_children ; j++)
+                     if (strcmp(pnode->child[i].child[j].name, cond_name[k]) == 0)
+                        if (strcmp(pnode->child[i].child[j].value, cond_value[k]) == 0)
+                           cond_satisfied++;
+               }
+            }
+            if (cond_satisfied==num_cond)
+               if (!mxml_add_resultnode(pnode->child+i, p2, nodelist, found))
+                  return 0;
          } else {
             if (strcmp(pnode->child[i].name, node_name) == 0)
                if (index == 0 || ++j == index)
