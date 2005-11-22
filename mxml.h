@@ -21,7 +21,9 @@
 
 #define INTERNAL_ENTITY               0
 #define EXTERNAL_ENTITY               1
-#define MXML_MAX_ENTITY            1000
+#define MXML_MAX_ENTITY             500
+
+#define MXML_MAX_CONDITION           10
 
 #ifdef _MSC_VER
 #define DIR_SEPARATOR              '\\'
