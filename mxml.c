@@ -270,6 +270,10 @@ void mxml_decode(char *str)
          strcpy(p, p+5);
       }
    }
+   if (str[0] == '\"' && str[strlen(str)-1] == '\"') {
+      strcpy(str, str+1);
+      str[strlen(str)-1] = 0;
+   }
 }
 
 /*------------------------------------------------------------------*/
@@ -1991,10 +1995,10 @@ void mxml_debug_tree(PMXML_NODE tree, int level)
 
    for (i=0 ; i<level ; i++)
       printf("  ");
-   printf("Addr: %08X\n", (unsigned int)tree);
+   printf("Addr: %08X\n", (size_t)tree);
    for (i=0 ; i<level ; i++)
       printf("  ");
-   printf("Prnt: %08X\n", (unsigned int)tree->parent);
+   printf("Prnt: %08X\n", (size_t)tree->parent);
    for (i=0 ; i<level ; i++)
       printf("  ");
    printf("NCld: %d\n", tree->n_children);
