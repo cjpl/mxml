@@ -1995,10 +1995,10 @@ void mxml_debug_tree(PMXML_NODE tree, int level)
 
    for (i=0 ; i<level ; i++)
       printf("  ");
-   printf("Addr: %08X\n", (size_t)tree);
+   printf("Addr: %08zX\n", (size_t)tree);
    for (i=0 ; i<level ; i++)
       printf("  ");
-   printf("Prnt: %08X\n", (size_t)tree->parent);
+   printf("Prnt: %08zX\n", (size_t)tree->parent);
    for (i=0 ; i<level ; i++)
       printf("  ");
    printf("NCld: %d\n", tree->n_children);
