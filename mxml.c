@@ -270,10 +270,10 @@ void mxml_decode(char *str)
          strcpy(p, p+5);
       }
    }
-   if (str[0] == '\"' && str[strlen(str)-1] == '\"') {
+/*   if (str[0] == '\"' && str[strlen(str)-1] == '\"') {
       strcpy(str, str+1);
       str[strlen(str)-1] = 0;
-   }
+   }*/
 }
 
 /*------------------------------------------------------------------*/
