@@ -66,7 +66,9 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <errno.h>
+#ifndef OS_VXWORKS
 #include <sys/time.h>
+#endif
 #include <time.h>
 
 #endif
@@ -195,7 +197,7 @@ void mxml_encode(char *src, int size, int translate)
    pd = buffer;
    for (ps = src ; *ps && (size_t)pd - (size_t)buffer < (size_t)(size-10) ; ps++) {
 
-      if (translate) { // tranlate "<", ">", "&", """, "'"
+     if (translate) { /* tranlate "<", ">", "&", """, "'" */
          switch (*ps) {
          case '<':
             strcpy(pd, "&lt;");
@@ -221,7 +223,7 @@ void mxml_encode(char *src, int size, int translate)
             *pd++ = *ps;
          }
       } else {
-         switch (*ps) { // translate only illegal XML characters "<" and "&"
+       switch (*ps) { /* translate only illegal XML characters "<" and "&" */
          case '<':
             strcpy(pd, "&lt;");
             pd += 4;
@@ -1113,7 +1115,7 @@ PMXML_NODE mxml_parse_buffer(char *buf, char *error, int error_size)
    PMXML_NODE root, ptree, pnew;
    int end_element;
    size_t len;
-   char *file_name = NULL; // dummy for 'HERE'
+   char *file_name = NULL; /* dummy for 'HERE' */
 
    p = buf;
    line_number = 1;
@@ -1936,7 +1938,7 @@ int mxml_write_tree(char *file_name, PMXML_NODE tree)
       return FALSE;
 
    for (i=0 ; i<tree->n_children ; i++)
-      if (tree->child[i].node_type == ELEMENT_NODE) // skip PI and comments
+     if (tree->child[i].node_type == ELEMENT_NODE) /* skip PI and comments */
          if (!mxml_write_subtree(writer, &tree->child[i], TRUE))
             return FALSE;
 
