@@ -78,6 +78,16 @@
 
 #define XML_INDENT "  "
 
+/* local prototypes */
+static PMXML_NODE read_error(PMXML_NODE root, const char *file_name, int line_number, char *error, int error_size, char *format, ...);
+static void mxml_encode(char *src, int size, int translate);
+static void mxml_decode(char *str);
+static int mxml_write_subtree(MXML_WRITER *writer, PMXML_NODE tree, int indent);
+static int mxml_write_line(MXML_WRITER *writer, const char *line);
+static int mxml_start_element1(MXML_WRITER *writer, const char *name, int indent);
+static int mxml_add_resultnode(PMXML_NODE node, const char *xml_path, PMXML_NODE **nodelist, int *found);
+static int mxml_find_nodes1(PMXML_NODE tree, const char *xml_path, PMXML_NODE **nodelist, int *found);
+
 /*------------------------------------------------------------------*/
 
 int mxml_write_line(MXML_WRITER *writer, const char *line)
@@ -101,11 +111,12 @@ int mxml_write_line(MXML_WRITER *writer, const char *line)
    return 0;
 }
 
-
 /*------------------------------------------------------------------*/
 
+/**
+ * open a memory buffer and write XML header
+ */
 MXML_WRITER *mxml_open_buffer()
-/* open a file and write XML header */
 {
    char str[256], line[1000];
    time_t now;
@@ -138,8 +149,10 @@ MXML_WRITER *mxml_open_buffer()
 
 /*------------------------------------------------------------------*/
 
+/**
+ * open a file and write XML header
+ */
 MXML_WRITER *mxml_open_file(const char *file_name) 
-/* open a file and write XML header */
 {
    char str[256], line[1000];
    time_t now;
@@ -176,8 +189,10 @@ MXML_WRITER *mxml_open_file(const char *file_name)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * convert '<' '>' '&' '"' ''' into &xx;
+ */
 void mxml_encode(char *src, int size, int translate)
-/* convert '<' '>' '&' '"' ''' into &xx; */
 {
    char *ps, *pd;
    static char *buffer = NULL;
@@ -244,8 +259,10 @@ void mxml_encode(char *src, int size, int translate)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * reverse of mxml_encode, strip leading or trailing '"'
+ */
 void mxml_decode(char *str)
-/* reverse of mxml_encode, strip leading or trailing '"' */
 {
    char *p;
 
@@ -280,8 +297,10 @@ void mxml_decode(char *str)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * set translation of <,>,",',&, on/off in writer
+ */
 int mxml_set_translate(MXML_WRITER *writer, int flag)
-/* set translation of <,>,",',&, on/off in writer */
 {
    int old_flag;
 
@@ -291,8 +310,10 @@ int mxml_set_translate(MXML_WRITER *writer, int flag)
 }
 /*------------------------------------------------------------------*/
 
+/**
+ * start a new XML element, must be followed by mxml_end_elemnt
+ */
 int mxml_start_element1(MXML_WRITER *writer, const char *name, int indent)
-/* start a new XML element, must be followed by mxml_end_elemnt */
 {
    int i;
    char line[1000], name_enc[1000];
@@ -342,8 +363,10 @@ int mxml_start_element_noindent(MXML_WRITER *writer, const char *name)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * close an open XML element
+ */
 int mxml_end_element(MXML_WRITER *writer)
-/* close an open XML element */
 {
    int i;
    char line[1000];
@@ -381,8 +404,10 @@ int mxml_end_element(MXML_WRITER *writer)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * write an attribute to the currently open XML element
+ */
 int mxml_write_attribute(MXML_WRITER *writer, const char *name, const char *value)
-/* write an attribute to the currently open XML element */
 {
    char name_enc[1000], val_enc[1000], line[2000];
 
@@ -401,8 +426,10 @@ int mxml_write_attribute(MXML_WRITER *writer, const char *name, const char *valu
 
 /*------------------------------------------------------------------*/
 
+/**
+ * write value of an XML element, like <[name]>[value]</[name]>
+ */
 int mxml_write_value(MXML_WRITER *writer, const char *data)
-/* write value of an XML element, like <[name]>[value]</[name]> */
 {
    static char *data_enc;
    static int data_size = 0;
@@ -430,8 +457,10 @@ int mxml_write_value(MXML_WRITER *writer, const char *data)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * write a comment to an XML file, enclosed in "<!--" and "-->"
+ */
 int mxml_write_comment(MXML_WRITER *writer, const char *string)
-/* write a comment to an XML file, enclosed in "<!--" and "-->" */
 {
    int  i;
    char line[1000];
@@ -456,8 +485,10 @@ int mxml_write_comment(MXML_WRITER *writer, const char *string)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * close a file opened with mxml_open_writer
+ */
 char *mxml_close_buffer(MXML_WRITER *writer)
-/* close a file opened with mxml_open_writer */
 {
    int i;
    char *p;
@@ -479,8 +510,10 @@ char *mxml_close_buffer(MXML_WRITER *writer)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * close a file opened with mxml_open_writer
+ */
 int mxml_close_file(MXML_WRITER *writer)
-/* close a file opened with mxml_open_writer */
 {
    int i;
 
@@ -501,8 +534,10 @@ int mxml_close_file(MXML_WRITER *writer)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * create root node of an XML tree
+ */
 PMXML_NODE mxml_create_root_node()
-/* create root node of an XML tree */
 {
    PMXML_NODE root;
 
@@ -515,8 +550,10 @@ PMXML_NODE mxml_create_root_node()
 
 /*------------------------------------------------------------------*/
 
-PMXML_NODE mxml_add_special_node_at(PMXML_NODE parent, int node_type, char *node_name, char *value, int index)
-/* add a subnode (child) to an existing parent node as a specific position */
+/**
+ * add a subnode (child) to an existing parent node as a specific position
+ */
+PMXML_NODE mxml_add_special_node_at(PMXML_NODE parent, int node_type, const char *node_name, const char *value, int index)
 {
    PMXML_NODE pnode, pchild;
    int i, j;
@@ -564,32 +601,40 @@ PMXML_NODE mxml_add_special_node_at(PMXML_NODE parent, int node_type, char *node
 
 /*------------------------------------------------------------------*/
 
-PMXML_NODE mxml_add_special_node(PMXML_NODE parent, int node_type, char *node_name, char *value)
-/* add a subnode (child) to an existing parent node at the end */
+/**
+ * add a subnode (child) to an existing parent node at the end
+ */
+PMXML_NODE mxml_add_special_node(PMXML_NODE parent, int node_type, const char *node_name, const char *value)
 {
    return mxml_add_special_node_at(parent, node_type, node_name, value, parent->n_children);
 }
 
 /*------------------------------------------------------------------*/
 
-PMXML_NODE mxml_add_node(PMXML_NODE parent, char *node_name, char *value)
-/* add a subnode (child) to an existing parent node at the end */
+/**
+ * write value of an XML element, like <[name]>[value]</[name]>
+ */
+PMXML_NODE mxml_add_node(PMXML_NODE parent, const char *node_name, const char *value)
 {
    return mxml_add_special_node_at(parent, ELEMENT_NODE, node_name, value, parent->n_children);
 }
 
 /*------------------------------------------------------------------*/
 
-PMXML_NODE mxml_add_node_at(PMXML_NODE parent, char *node_name, char *value, int index)
-/* add a subnode (child) to an existing parent node at the end */
+/**
+ * add a subnode (child) to an existing parent node at the end
+ */
+PMXML_NODE mxml_add_node_at(PMXML_NODE parent, const char *node_name, const char *value, int index)
 {
    return mxml_add_special_node_at(parent, ELEMENT_NODE, node_name, value, index);
 }
 
 /*------------------------------------------------------------------*/
 
+/**
+ * add a whole node tree to an existing parent node at a specific position
+ */
 int mxml_add_tree_at(PMXML_NODE parent, PMXML_NODE tree, int index)
-/* add a whole node tree to an existing parent node at a specific position */
 {
    PMXML_NODE pchild;
    int i, j;
@@ -643,16 +688,20 @@ int mxml_add_tree_at(PMXML_NODE parent, PMXML_NODE tree, int index)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * add a whole node tree to an existing parent node at the end
+ */
 int mxml_add_tree(PMXML_NODE parent, PMXML_NODE tree)
-/* add a whole node tree to an existing parent node at the end */
 {
    return mxml_add_tree_at(parent, tree, parent->n_children);
 }
 
 /*------------------------------------------------------------------*/
 
-int mxml_add_attribute(PMXML_NODE pnode, char *attrib_name, char *attrib_value)
-/* add an attribute to an existing node */
+/**
+ * add an attribute to an existing node
+ */
+int mxml_add_attribute(PMXML_NODE pnode, const char *attrib_name, const char *attrib_value)
 {
    if (pnode->n_attributes == 0) {
       pnode->attribute_name  = (char*)malloc(MXML_NAME_LENGTH);
@@ -672,8 +721,10 @@ int mxml_add_attribute(PMXML_NODE pnode, char *attrib_name, char *attrib_value)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * return number of subnodes (children) of a node
+ */
 int mxml_get_number_of_children(PMXML_NODE pnode)
-/* return number of subnodes (children) of a node */
 {
    assert(pnode);
    return pnode->n_children;
@@ -681,8 +732,10 @@ int mxml_get_number_of_children(PMXML_NODE pnode)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * return number of subnodes (children) of a node
+ */
 PMXML_NODE mxml_subnode(PMXML_NODE pnode, int index)
-/* return number of subnodes (children) of a node */
 {
    assert(pnode);
    if (index < pnode->n_children)
@@ -692,9 +745,8 @@ PMXML_NODE mxml_subnode(PMXML_NODE pnode, int index)
 
 /*------------------------------------------------------------------*/
 
-int mxml_find_nodes1(PMXML_NODE tree, char *xml_path, PMXML_NODE **nodelist, int *found);
 
-int mxml_add_resultnode(PMXML_NODE node, char *xml_path, PMXML_NODE **nodelist, int *found)
+int mxml_add_resultnode(PMXML_NODE node, const char *xml_path, PMXML_NODE **nodelist, int *found)
 {
    /* if at end of path, add this node */
    if (*xml_path == 0) {
@@ -715,8 +767,7 @@ int mxml_add_resultnode(PMXML_NODE node, char *xml_path, PMXML_NODE **nodelist, 
 
 /*------------------------------------------------------------------*/
 
-int mxml_find_nodes1(PMXML_NODE tree, char *xml_path, PMXML_NODE **nodelist, int *found)
-/*
+/**
    Return list of XML nodes with a subset of XPATH specifications.
    Following elemets are possible
 
@@ -727,9 +778,11 @@ int mxml_find_nodes1(PMXML_NODE tree, char *xml_path, PMXML_NODE **nodelist, int
    /<node>[<subnode>=<value>]/<node>   Find subnode of the above
    /<node>[@<attrib>=<value>]/<node>   Find a node which has a specific attribute
 */
+int mxml_find_nodes1(PMXML_NODE tree, const char *xml_path, PMXML_NODE **nodelist, int *found)
 {
    PMXML_NODE pnode;
-   char *p1, *p2, *p3, node_name[256], condition[256];
+   const char *p1,*p2;
+   char *p3, node_name[256], condition[256];
    char cond_name[MXML_MAX_CONDITION][256], cond_value[MXML_MAX_CONDITION][256];
    int  cond_type[MXML_MAX_CONDITION];
    int i, j, k, index, num_cond;
@@ -860,7 +913,7 @@ int mxml_find_nodes1(PMXML_NODE tree, char *xml_path, PMXML_NODE **nodelist, int
 
 /*------------------------------------------------------------------*/
 
-int mxml_find_nodes(PMXML_NODE tree, char *xml_path, PMXML_NODE **nodelist)
+int mxml_find_nodes(PMXML_NODE tree, const char *xml_path, PMXML_NODE **nodelist)
 {
    int status, found = 0;
    
@@ -874,11 +927,11 @@ int mxml_find_nodes(PMXML_NODE tree, char *xml_path, PMXML_NODE **nodelist)
 
 /*------------------------------------------------------------------*/
 
-PMXML_NODE mxml_find_node(PMXML_NODE tree, char *xml_path)
-/*
-   Search for a specific XML node with a subset of XPATH specifications.
-   Return first found node. For syntax see mxml_find_nodes()
-*/
+/**
+ *  Search for a specific XML node with a subset of XPATH specifications.
+ *  Return first found node. For syntax see mxml_find_nodes()
+ */
+PMXML_NODE mxml_find_node(PMXML_NODE tree, const char *xml_path)
 {
    PMXML_NODE *node, pnode;
    int n;
@@ -911,7 +964,7 @@ char *mxml_get_value(PMXML_NODE pnode)
 
 /*------------------------------------------------------------------*/
 
-char *mxml_get_attribute(PMXML_NODE pnode, char *name)
+char *mxml_get_attribute(PMXML_NODE pnode, const char *name)
 {
    int i;
 
@@ -925,7 +978,7 @@ char *mxml_get_attribute(PMXML_NODE pnode, char *name)
 
 /*------------------------------------------------------------------*/
 
-int mxml_replace_node_name(PMXML_NODE pnode, char *name)
+int mxml_replace_node_name(PMXML_NODE pnode, const char *name)
 {
    strlcpy(pnode->name, name, sizeof(pnode->name));
    return TRUE;
@@ -933,7 +986,7 @@ int mxml_replace_node_name(PMXML_NODE pnode, char *name)
 
 /*------------------------------------------------------------------*/
 
-int mxml_replace_node_value(PMXML_NODE pnode, char *value)
+int mxml_replace_node_value(PMXML_NODE pnode, const char *value)
 {
    if (pnode->value)
       pnode->value = (char *)realloc(pnode->value, strlen(value)+1);
@@ -950,8 +1003,7 @@ int mxml_replace_node_value(PMXML_NODE pnode, char *value)
 
 /*------------------------------------------------------------------*/
 
-int mxml_replace_subvalue(PMXML_NODE pnode, char *name, char *value)
-/* 
+/**
    replace value os a subnode, like
 
    <parent>
@@ -960,6 +1012,7 @@ int mxml_replace_subvalue(PMXML_NODE pnode, char *name, char *value)
 
    if pnode=parent, and "name"="child", then "value" gets replaced
 */
+int mxml_replace_subvalue(PMXML_NODE pnode, const char *name, const char *value)
 {
    int i;
 
@@ -975,8 +1028,10 @@ int mxml_replace_subvalue(PMXML_NODE pnode, char *name, char *value)
 
 /*------------------------------------------------------------------*/
 
-int mxml_replace_attribute_name(PMXML_NODE pnode, char *old_name, char *new_name)
-/* change the name of an attribute, keep its value */
+/**
+ * change the name of an attribute, keep its value
+ */
+int mxml_replace_attribute_name(PMXML_NODE pnode, const char *old_name, const char *new_name)
 {
    int i;
 
@@ -993,8 +1048,10 @@ int mxml_replace_attribute_name(PMXML_NODE pnode, char *old_name, char *new_name
 
 /*------------------------------------------------------------------*/
 
-int mxml_replace_attribute_value(PMXML_NODE pnode, char *attrib_name, char *attrib_value)
-/* change the value of an attribute */
+/**
+ * change the value of an attribute
+ */
+int mxml_replace_attribute_value(PMXML_NODE pnode, const char *attrib_name, const char *attrib_value)
 {
    int i;
 
@@ -1012,8 +1069,10 @@ int mxml_replace_attribute_value(PMXML_NODE pnode, char *attrib_name, char *attr
 
 /*------------------------------------------------------------------*/
 
+/**
+ * free memory of a node and remove it from the parent's child list
+ */
 int mxml_delete_node(PMXML_NODE pnode)
-/* free memory of a node and remove it from the parent's child list */
 {
    PMXML_NODE parent;
    int i, j;
@@ -1046,7 +1105,7 @@ int mxml_delete_node(PMXML_NODE pnode)
 
 /*------------------------------------------------------------------*/
 
-int mxml_delete_attribute(PMXML_NODE pnode, char *attrib_name)
+int mxml_delete_attribute(PMXML_NODE pnode, const char *attrib_name)
 {
    int i, j;
 
@@ -1078,8 +1137,10 @@ int mxml_delete_attribute(PMXML_NODE pnode, char *attrib_name)
 
 #define HERE root, file_name, line_number, error, error_size
 
-PMXML_NODE read_error(PMXML_NODE root, char *file_name, int line_number, char *error, int error_size, char *format, ...)
-/* used inside mxml_parse_file for reporting errors */
+/**
+ * used inside mxml_parse_file for reporting errors
+ */
+PMXML_NODE read_error(PMXML_NODE root, const char *file_name, int line_number, char *error, int error_size, char *format, ...)
 {
    char *msg, str[1000];
    va_list argptr;
@@ -1104,13 +1165,15 @@ PMXML_NODE read_error(PMXML_NODE root, char *file_name, int line_number, char *e
 
 /*------------------------------------------------------------------*/
 
-PMXML_NODE mxml_parse_buffer(char *buf, char *error, int error_size)
-/* parse a XML buffer and convert it into a tree of MXML_NODE's. Return NULL
-   in case of an error, return error description. Optional file_name is used
-   for error reporting if called from mxml_parse_file() */
+/**
+ * Parse a XML buffer and convert it into a tree of MXML_NODE's.
+ * Return NULL in case of an error, return error description.
+ * Optional file_name is used for error reporting if called from mxml_parse_file()
+ */
+PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
 {
-   char node_name[256], attrib_name[256], attrib_value[1000];
-   char *p, *pv;
+   char node_name[256], attrib_name[256], attrib_value[1000], quote;
+   const char *p, *pv;
    int i,j, line_number;
    PMXML_NODE root, ptree, pnew;
    int end_element;
@@ -1305,13 +1368,14 @@ PMXML_NODE mxml_parse_buffer(char *buf, char *error, int error_size)
                   }
                   if (!*p)
                      return read_error(HERE, "Unexpected end of file");
-                  if (*p != '\"')
-                     return read_error(HERE, "Expect \'\"\' here");
+                  if (*p != '\"' && *p != '\'')
+                     return read_error(HERE, "Expect \" or \' here");
+		            quote = *p;
                   p++;
 
                   /* extract attribute value */
                   pv = p;
-                  while (*pv && *pv != '\"')
+                  while (*pv && *pv != quote)
                      pv++;
                   if (!*pv)
                      return read_error(HERE, "Unexpected end of file");
@@ -1410,10 +1474,12 @@ PMXML_NODE mxml_parse_buffer(char *buf, char *error, int error_size)
 
 /*------------------------------------------------------------------*/
 
-int mxml_parse_entity(char **buf, char *file_name, char *error, int error_size)
-/* parse !ENTYTY entries of XML files and replace with references. Return 0
-   in case of no errors, return error description. Optional file_name is used
-   for error reporting if called from mxml_parse_file() */
+/**
+ * parse !ENTYTY entries of XML files and replace with references.
+ * Return 0 in case of no errors, return error description.
+ * Optional file_name is used for error reporting if called from mxml_parse_file()
+ */
+int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_size)
 {
    char *p;
    char *pv;
@@ -1853,9 +1919,11 @@ int mxml_parse_entity(char **buf, char *file_name, char *error, int error_size)
 
 /*------------------------------------------------------------------*/
 
-PMXML_NODE mxml_parse_file(char *file_name, char *error, int error_size)
-/* parse a XML file and convert it into a tree of MXML_NODE's. Return NULL
-   in case of an error, return error description */
+/**
+ * parse a XML file and convert it into a tree of MXML_NODE's.
+ * Return NULL in case of an error, return error description
+ */
+PMXML_NODE mxml_parse_file(const char *file_name, char *error, int error_size)
 {
    char *buf, line[1000];
    int fh, length;
@@ -1903,8 +1971,10 @@ PMXML_NODE mxml_parse_file(char *file_name, char *error, int error_size)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * write complete subtree recursively into file opened with mxml_open_document()
+ */
 int mxml_write_subtree(MXML_WRITER *writer, PMXML_NODE tree, int indent)
-/* write complete subtree recursively into file opened with mxml_open_document() */
 {
    int i;
 
@@ -1926,8 +1996,10 @@ int mxml_write_subtree(MXML_WRITER *writer, PMXML_NODE tree, int indent)
 
 /*------------------------------------------------------------------*/
 
-int mxml_write_tree(char *file_name, PMXML_NODE tree)
-/* write a complete XML tree to a file */
+/**
+ * write a complete XML tree to a file
+ */
+int mxml_write_tree(const char *file_name, PMXML_NODE tree)
 {
    MXML_WRITER *writer;
    int i;
@@ -1978,8 +2050,10 @@ PMXML_NODE mxml_clone_tree(PMXML_NODE tree)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * print XML tree for debugging
+ */
 void mxml_debug_tree(PMXML_NODE tree, int level)
-/* print XML tree for debugging */
 {
    int i, j;
 
@@ -2019,9 +2093,11 @@ void mxml_debug_tree(PMXML_NODE tree, int level)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * free memory of XML tree, must be called after any 
+ * mxml_create_root_node() or mxml_parse_file()
+ */
 void mxml_free_tree(PMXML_NODE tree)
-/* free memory of XML tree, must be called after any 
-   mxml_create_root_node() or mxml_parse_file() */
 {
    int i;
 
@@ -2075,7 +2151,8 @@ void mxml_test()
 */
 
 /*------------------------------------------------------------------*/
-/* mxml_basename deletes any prefix ending with the last slash '/' character
+ /**
+   mxml_basename deletes any prefix ending with the last slash '/' character
    present in path. mxml_dirname deletes the filename portion, beginning with
    the last slash '/' character to the end of path. Followings are examples
    from these functions
@@ -2088,7 +2165,8 @@ void mxml_test()
     "path/to/test.txt" "path/to" "test.txt"
     "test.txt          "."       "test.txt"
 
-   Under Windows, '\\' and ':' are recognized ad separator too. */
+   Under Windows, '\\' and ':' are recognized ad separator too.
+ */
 
 void mxml_basename(char *path)
 {
