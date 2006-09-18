@@ -820,7 +820,7 @@ int mxml_find_nodes1(PMXML_NODE tree, const char *xml_path, PMXML_NODE **nodelis
             p2++;
          } else {
             /* evaluate [<@attrib>/<subnode>=<value>] */
-            while (*p2 && isspace(*p2))
+            while (*p2 && isspace((unsigned char)*p2))
                p2++;
             strlcpy(condition, p2, sizeof(condition));
             if (strchr(condition, ']'))
@@ -1283,7 +1283,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
             if (*p == '/') {
                end_element = TRUE;
                p++;
-               while (*p && isspace(*p)) {
+               while (*p && isspace((unsigned char)*p)) {
                   if (*p == '\n')
                      line_number++;
                   p++;
@@ -1295,7 +1295,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
             /* extract node name */
             i = 0;
             node_name[i] = 0;
-            while (*p && !isspace(*p) && *p != '/' && *p != '>' && *p != '<')
+            while (*p && !isspace((unsigned char)*p) && *p != '/' && *p != '>' && *p != '<')
                node_name[i++] = *p++;
             node_name[i] = 0;
             if (!*p)
@@ -1325,7 +1325,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
                /* allocate new element structure in parent tree */
                pnew = mxml_add_node(ptree, node_name, NULL);
 
-               while (*p && isspace(*p)) {
+               while (*p && isspace((unsigned char)*p)) {
                   if (*p == '\n')
                      line_number++;
                   p++;
@@ -1337,7 +1337,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
 
                   /* found attribute */
                   pv = p;
-                  while (*pv && !isspace(*pv) && *pv != '=' && *pv != '<' && *pv != '>')
+                  while (*pv && !isspace((unsigned char)*pv) && *pv != '=' && *pv != '<' && *pv != '>')
                      pv++;
                   if (!*pv)
                      return read_error(HERE, "Unexpected end of file");
@@ -1352,7 +1352,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
                   attrib_name[len] = 0;
 
                   p = pv;
-                  while (*p && isspace(*p)) {
+                  while (*p && isspace((unsigned char)*p)) {
                      if (*p == '\n')
                         line_number++;
                      p++;
@@ -1363,7 +1363,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
                      return read_error(HERE, "Expect \"=\" here");
 
                   p++;
-                  while (*p && isspace(*p)) {
+                  while (*p && isspace((unsigned char)*p)) {
                      if (*p == '\n')
                         line_number++;
                      p++;
@@ -1392,7 +1392,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
                   mxml_add_attribute(pnew, attrib_name, attrib_value);
 
                   p = pv+1;
-                  while (*p && isspace(*p)) {
+                  while (*p && isspace((unsigned char)*p)) {
                      if (*p == '\n')
                         line_number++;
                      p++;
@@ -1406,7 +1406,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
                   /* found empty node, like <node/>, just skip closing bracket */
                   p++;
 
-                  while (*p && isspace(*p)) {
+                  while (*p && isspace((unsigned char)*p)) {
                      if (*p == '\n')
                         line_number++;
                      p++;
@@ -1424,7 +1424,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
 
                   /* check if we have sub-element or value */
                   pv = p;
-                  while (*pv && isspace(*pv)) {
+                  while (*pv && isspace((unsigned char)*pv)) {
                      if (*pv == '\n')
                         line_number++;
                      pv++;
@@ -1552,7 +1552,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
 
          /* found new entity */
          p++;
-         while (*p && isspace(*p)) {
+         while (*p && isspace((unsigned char)*p)) {
             if (*p == '\n')
                line_number++;
             p++;
@@ -1602,7 +1602,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
             /* extract entity name */
             p = pv;
 
-            while (*p && isspace(*p) && *p != '<' && *p != '>') {
+            while (*p && isspace((unsigned char)*p) && *p != '<' && *p != '>') {
                if (*p == '\n')
                   line_number++;
                p++;
@@ -1623,7 +1623,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
             }
 
             pv = p;
-            while (*pv && !isspace(*pv) && *pv != '<' && *pv != '>')
+            while (*pv && !isspace((unsigned char)*pv) && *pv != '<' && *pv != '>')
                pv++;
 
             if (!*pv) {
@@ -1646,7 +1646,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
             entity_name[nentity][0] = '&';
             i = 1;
             entity_name[nentity][i] = 0;
-            while (*p && !isspace(*p) && *p != '/' && *p != '>' && *p != '<' && i < 253)
+            while (*p && !isspace((unsigned char)*p) && *p != '/' && *p != '>' && *p != '<' && i < 253)
                entity_name[nentity][i++] = *p++;
             entity_name[nentity][i++] = ';';
             entity_name[nentity][i] = 0;
@@ -1667,7 +1667,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
             }
 
             /* extract replacement or SYSTEM */
-            while (*p && isspace(*p)) {
+            while (*p && isspace((unsigned char)*p)) {
                if (*p == '\n')
                   line_number++;
                p++;
@@ -1696,7 +1696,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
             }
 
             /* extract replacement */
-            while (*p && isspace(*p)) {
+            while (*p && isspace((unsigned char)*p)) {
                if (*p == '\n')
                   line_number++;
                p++;
@@ -1781,7 +1781,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
             free(replacement);
 
             p = pv;
-            while (*p && isspace(*p)) {
+            while (*p && isspace((unsigned char)*p)) {
                if (*p == '\n')
                   line_number++;
                p++;
