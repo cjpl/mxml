@@ -518,6 +518,21 @@ int mxml_write_comment(MXML_WRITER *writer, const char *string)
 /*------------------------------------------------------------------*/
 
 /**
+ * shortcut to write an element with a value but without attribute
+ */
+int mxml_write_element(MXML_WRITER *writer, const char *name, const char *value)
+{
+   int i;
+
+   i = mxml_start_element(writer, name);
+   i += mxml_write_value(writer, value);
+   i += mxml_end_element(writer);
+   return i;
+}
+
+/*------------------------------------------------------------------*/
+
+/**
  * close a file opened with mxml_open_writer
  */
 char *mxml_close_buffer(MXML_WRITER *writer)
