@@ -73,6 +73,7 @@ extern "C" {
 #endif
 #endif
 
+void mxml_suppress_date(int suppress);
 MXML_WRITER *mxml_open_file(const char *file_name);
 MXML_WRITER *mxml_open_buffer(void); 
 int mxml_set_translate(MXML_WRITER *writer, int flag);
@@ -82,6 +83,7 @@ int mxml_end_element(MXML_WRITER *writer);
 int mxml_write_comment(MXML_WRITER *writer, const char *string);
 int mxml_write_attribute(MXML_WRITER *writer, const char *name, const char *value);
 int mxml_write_value(MXML_WRITER *writer, const char *value);
+int mxml_write_empty_line(MXML_WRITER *writer);
 char *mxml_close_buffer(MXML_WRITER *writer);
 int mxml_close_file(MXML_WRITER *writer);
 

@@ -78,6 +78,8 @@
 
 #define XML_INDENT "  "
 
+static int mxml_suppress_date_flag = 0; /* suppress writing date at the top of file. */
+
 /* local prototypes */
 static PMXML_NODE read_error(PMXML_NODE root, const char *file_name, int line_number, char *error, int error_size, char *format, ...);
 static void mxml_encode(char *src, int size, int translate);
@@ -138,13 +140,24 @@ MXML_WRITER *mxml_open_buffer()
    strcpy(str, ctime(&now));
    str[24] = 0;
    sprintf(line, "<!-- created by MXML on %s -->\n", str);
-   mxml_write_line(writer, line);
+   if (mxml_suppress_date_flag == 0)
+      mxml_write_line(writer, line);
 
    /* initialize stack */
    writer->level = 0;
    writer->element_is_open = 0;
 
    return writer;
+}
+
+/*------------------------------------------------------------------*/
+
+/**
+ * suppress writing date at the top of file.
+ */
+void mxml_suppress_date(int suppress)
+{
+   mxml_suppress_date_flag = suppress;
 }
 
 /*------------------------------------------------------------------*/
@@ -178,7 +191,8 @@ MXML_WRITER *mxml_open_file(const char *file_name)
    strcpy(str, ctime(&now));
    str[24] = 0;
    sprintf(line, "<!-- created by MXML on %s -->\n", str);
-   mxml_write_line(writer, line);
+   if (mxml_suppress_date_flag == 0)
+      mxml_write_line(writer, line);
 
    /* initialize stack */
    writer->level = 0;
@@ -458,6 +472,24 @@ int mxml_write_value(MXML_WRITER *writer, const char *data)
 /*------------------------------------------------------------------*/
 
 /**
+ * write empty line
+ */
+int mxml_write_empty_line(MXML_WRITER *writer)
+{
+   if (writer->element_is_open) {
+      mxml_write_line(writer, ">\n");
+      writer->element_is_open = FALSE;
+   }
+
+   if (mxml_write_line(writer, "\n") != 1)
+      return FALSE;
+
+   return TRUE;
+}
+
+/*------------------------------------------------------------------*/
+
+/**
  * write a comment to an XML file, enclosed in "<!--" and "-->"
  */
 int mxml_write_comment(MXML_WRITER *writer, const char *string)
@@ -636,7 +668,7 @@ PMXML_NODE mxml_add_node_at(PMXML_NODE parent, const char *node_name, const char
 int mxml_add_tree_at(PMXML_NODE parent, PMXML_NODE tree, int index)
 {
    PMXML_NODE pchild;
-   int i, j;
+   int i, j, k;
 
    assert(parent);
    assert(tree);
@@ -663,10 +695,10 @@ int mxml_add_tree_at(PMXML_NODE parent, PMXML_NODE tree, int index)
          memcpy(&parent->child[i], &parent->child[i-1], sizeof(MXML_NODE));
 
          /* correct parent pointer for children */
-         for (i=0 ; i<parent->n_children ; i++) {
-            pchild = parent->child+i;
-            for (j=0 ; j<pchild->n_children ; j++)
-               pchild->child[j].parent = pchild;
+         for (j=0 ; j<parent->n_children ; j++) {
+            pchild = parent->child+j;
+            for (k=0 ; k<pchild->n_children ; k++)
+               pchild->child[k].parent = pchild;
          }
       }
 
@@ -744,6 +776,8 @@ PMXML_NODE mxml_subnode(PMXML_NODE pnode, int index)
 
 /*------------------------------------------------------------------*/
 
+
+int mxml_find_nodes1(PMXML_NODE tree, const char *xml_path, PMXML_NODE **nodelist, int *found);
 
 int mxml_add_resultnode(PMXML_NODE node, const char *xml_path, PMXML_NODE **nodelist, int *found)
 {
