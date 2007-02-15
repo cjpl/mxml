@@ -81,6 +81,7 @@ int mxml_start_element(MXML_WRITER *writer, const char *name);
 int mxml_start_element_noindent(MXML_WRITER *writer, const char *name);
 int mxml_end_element(MXML_WRITER *writer); 
 int mxml_write_comment(MXML_WRITER *writer, const char *string);
+int mxml_write_element(MXML_WRITER *writer, const char *name, const char *value);
 int mxml_write_attribute(MXML_WRITER *writer, const char *name, const char *value);
 int mxml_write_value(MXML_WRITER *writer, const char *value);
 int mxml_write_empty_line(MXML_WRITER *writer);
