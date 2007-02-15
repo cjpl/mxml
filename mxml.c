@@ -10,10 +10,10 @@
    functions can be used:
 
    writer = mxml_open_file(file_name);
-     mxml_start_element(writer, name);
-     mxml_write_attribute(writer, name, value);
-     mxml_write_value(writer, value);
-     mxml_end_element(writer); 
+   mxml_start_element(writer, name);
+   mxml_write_attribute(writer, name, value);
+   mxml_write_value(writer, value);
+   mxml_end_element(writer); 
      ...
    mxml_close_file(writer);
 
@@ -480,6 +480,16 @@ int mxml_write_comment(MXML_WRITER *writer, const char *string)
       return FALSE;
 
    return TRUE;
+}
+
+int mxml_write_element(MXML_WRITER *writer, const char *name, const char *value)
+{
+   int i;
+
+   i = mxml_start_element(writer, name);
+   i += mxml_write_value(writer, value);
+   i += mxml_end_element(writer);
+   return i;
 }
 
 /*------------------------------------------------------------------*/
