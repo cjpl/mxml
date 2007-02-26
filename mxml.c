@@ -423,7 +423,7 @@ int mxml_end_element(MXML_WRITER *writer)
  */
 int mxml_write_attribute(MXML_WRITER *writer, const char *name, const char *value)
 {
-   char name_enc[1000], val_enc[1000], line[2000];
+   char name_enc[4096], val_enc[4096], line[8192];
 
    if (!writer->element_is_open)
       return FALSE;
@@ -1547,6 +1547,8 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
    int ip;                      /* counter for entity value */
    char directoryname[FILENAME_MAX];
    char filename[FILENAME_MAX];
+   int entity_value_length[MXML_MAX_ENTITY];
+   int entity_name_length[MXML_MAX_ENTITY];
 
    for (ip = 0; ip < MXML_MAX_ENTITY; ip++)
       entity_value[ip] = NULL;
@@ -1918,10 +1920,12 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
    length = strlen(buffer);
    for (i = 0; i < nentity; i++) {
       p = buffer;
+      entity_value_length[i] = strlen(entity_value[i]);
+      entity_name_length[i] = strlen(entity_name[i]);
       while (1) {
          pv = strstr(p, entity_name[i]);
          if (pv) {
-            length += strlen(entity_value[i]) - strlen(entity_name[i]);
+            length += entity_value_length[i] - entity_name_length[i];
             p = pv + 1;
          } else {
             break;
@@ -1947,10 +1951,10 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
       if (*p == '&') {
          /* found entity */
          for (j = 0; j < nentity; j++) {
-            if (strncmp(p, entity_name[j], strlen(entity_name[j])) == 0) {
-               for (k = 0; k < (int) strlen(entity_value[j]); k++)
+            if (strncmp(p, entity_name[j], entity_name_length[j]) == 0) {
+               for (k = 0; k < (int) entity_value_length[j]; k++)
                   *pv++ = entity_value[j][k];
-               p += strlen(entity_name[j]);
+               p += entity_name_length[j];
                break;
             }
          }
