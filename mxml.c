@@ -1415,6 +1415,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
                      len = sizeof(attrib_name)-1;
                   memcpy(attrib_name, p, len);
                   attrib_name[len] = 0;
+                  mxml_decode(attrib_name);
 
                   p = pv;
                   while (*p && isspace((unsigned char)*p)) {
@@ -1452,6 +1453,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
                      len = sizeof(attrib_value)-1;
                   memcpy(attrib_value, p, len);
                   attrib_value[len] = 0;
+                  mxml_decode(attrib_value);
 
                   /* add attribute to current node */
                   mxml_add_attribute(pnew, attrib_name, attrib_value);
