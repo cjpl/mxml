@@ -11,6 +11,9 @@
 
 /*------------------------------------------------------------------*/
 
+#ifndef _MXML_H_
+#define _MXML_H_
+
 #define MXML_NAME_LENGTH 64
 
 #define ELEMENT_NODE                  1
@@ -130,4 +133,5 @@ void mxml_basename(char *path);
 }
 #endif
 
+#endif /* _MXML_H_ */
 /*------------------------------------------------------------------*/
