@@ -51,6 +51,8 @@
 #include <io.h>
 #include <time.h>
 
+#pragma warning( disable: 4996) /* disable "deprecated" warning */
+
 #else
 
 #define TRUE 1
