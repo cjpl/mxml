@@ -3,7 +3,7 @@
    Name:         mxml.c
    Created by:   Stefan Ritt
 
-   Contents:     Midas XML Library
+   Contents:     MIDAS XML Library
 
    This is a simple implementation of XML functions for writing and
    reading XML files. For writing an XML file from scratch, following
