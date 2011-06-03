@@ -152,7 +152,7 @@ int mxml_write_line(MXML_WRITER *writer, const char *line)
 {
    int len;
    
-   len = strlen(line);
+   len = (int)strlen(line);
 
    if (writer->buffer) {
       if (writer->buffer_len + len >= writer->buffer_size) {
@@ -163,7 +163,7 @@ int mxml_write_line(MXML_WRITER *writer, const char *line)
       writer->buffer_len += len;
       return len;
    } else {
-      return write(writer->fh, line, len);
+      return (int)write(writer->fh, line, len);
    }
 
    return 0;
@@ -519,7 +519,7 @@ int mxml_write_value(MXML_WRITER *writer, const char *data)
       _data_enc = (char *)mxml_malloc(1000);
       data_size = 1000;
    } else if ((int)strlen(data)*2+1000 > data_size) {
-      data_size = 1000+strlen(data)*2;
+      data_size = 1000+(int)strlen(data)*2;
       _data_enc = (char *)mxml_realloc(_data_enc, data_size);
    }
 
@@ -1732,7 +1732,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
                goto error;
             }
 
-            len = (size_t) pv - (size_t) p;
+            len = (int)((size_t) pv - (size_t) p);
 
             entity_name[nentity][0] = '&';
             i = 1;
@@ -1822,7 +1822,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
                goto error;
             }
 
-            len = (size_t) pv - (size_t) p;
+            len = (int)((size_t) pv - (size_t) p);
             replacement = (char *) mxml_malloc(len + 1);
             if (replacement == NULL) {
                read_error(HERE, "Cannot allocate memory.");
@@ -1889,7 +1889,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
             }
             sprintf(entity_value[i], "<!-- %s is missing -->", entity_reference_name[i]);
          } else {
-            length = lseek(fh, 0, SEEK_END);
+            length = (int)lseek(fh, 0, SEEK_END);
             lseek(fh, 0, SEEK_SET);
             if (length == 0) {
                entity_value[i] = (char *) mxml_malloc(1);
@@ -1910,7 +1910,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
                }
 
                /* read complete file at once */
-               length = read(fh, entity_value[i], length);
+               length = (int)read(fh, entity_value[i], length);
                entity_value[i][length - 1] = 0;
                close(fh);
 
@@ -1925,11 +1925,11 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
    }
 
    /* count length of output string */
-   length = strlen(buffer);
+   length = (int)strlen(buffer);
    for (i = 0; i < nentity; i++) {
       p = buffer;
-      entity_value_length[i] = strlen(entity_value[i]);
-      entity_name_length[i] = strlen(entity_name[i]);
+      entity_value_length[i] = (int)strlen(entity_value[i]);
+      entity_name_length[i] = (int)strlen(entity_name[i]);
       while (1) {
          pv = strstr(p, entity_name[i]);
          if (pv) {
@@ -2005,7 +2005,7 @@ PMXML_NODE mxml_parse_file(const char *file_name, char *error, int error_size)
       return NULL;
    }
 
-   length = lseek(fh, 0, SEEK_END);
+   length = (int)lseek(fh, 0, SEEK_END);
    lseek(fh, 0, SEEK_SET);
    buf = (char *)mxml_malloc(length+1);
    if (buf == NULL) {
@@ -2017,7 +2017,7 @@ PMXML_NODE mxml_parse_file(const char *file_name, char *error, int error_size)
    }
 
    /* read complete file at once */
-   length = read(fh, buf, length);
+   length = (int)read(fh, buf, length);
    buf[length] = 0;
    close(fh);
 
