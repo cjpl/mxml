@@ -55,7 +55,8 @@ typedef struct mxml_struct {
    int        n_attributes;            // list of attributes
    char       *attribute_name;
    char       **attribute_value;
-   int        line_number;             // line number for source file
+   int        line_number_start;       // first line number in XML file, starting from 1
+   int        line_number_end;         // last line number in XML file, starting from 1
    PMXML_NODE parent;                  // pointer to parent element
    int        n_children;              // list of children
    PMXML_NODE child;
@@ -97,6 +98,9 @@ PMXML_NODE mxml_find_node(PMXML_NODE tree, const char *xml_path);
 int mxml_find_nodes(PMXML_NODE tree, const char *xml_path, PMXML_NODE **nodelist);
 char *mxml_get_name(PMXML_NODE pnode);
 char *mxml_get_value(PMXML_NODE pnode);
+int mxml_get_line_number_start(PMXML_NODE pnode);
+int mxml_get_line_number_end(PMXML_NODE pnode);
+PMXML_NODE mxml_get_node_at_line(PMXML_NODE tree, int linenumber);
 char *mxml_get_attribute(PMXML_NODE pnode, const char *name);
 
 int mxml_add_attribute(PMXML_NODE pnode, const char *attrib_name, const char *attrib_value);

@@ -1073,6 +1073,22 @@ char *mxml_get_value(PMXML_NODE pnode)
 
 /*------------------------------------------------------------------*/
 
+int mxml_get_line_number_start(PMXML_NODE pnode)
+{
+   assert(pnode);
+   return pnode->line_number_start;
+}
+
+/*------------------------------------------------------------------*/
+
+int mxml_get_line_number_end(PMXML_NODE pnode)
+{
+   assert(pnode);
+   return pnode->line_number_end;
+}
+
+/*------------------------------------------------------------------*/
+
 char *mxml_get_attribute(PMXML_NODE pnode, const char *name)
 {
    int i;
@@ -1316,6 +1332,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
             /* found comment */
 
             pnew = mxml_add_special_node(ptree, COMMENT_NODE, "Comment", NULL);
+            pnew->line_number_start = line_number;
             pv = p+3;
             while (*pv == ' ')
                pv++;
@@ -1334,6 +1351,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
             pnew->value = (char *)mxml_malloc(len+1);
             memcpy(pnew->value, pv, len);
             pnew->value[len] = 0;
+            pnew->line_number_end = line_number;
             mxml_decode(pnew->value);
 
             p += 3;
@@ -1342,6 +1360,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
 
             /* found ?...? element */
             pnew = mxml_add_special_node(ptree, PROCESSING_INSTRUCTION_NODE, "PI", NULL);
+            pnew->line_number_start = line_number;
             pv = p+1;
 
             p++;
@@ -1358,6 +1377,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
             pnew->value = (char *)mxml_malloc(len+1);
             memcpy(pnew->value, pv, len);
             pnew->value[len] = 0;
+            pnew->line_number_end = line_number;
             mxml_decode(pnew->value);
 
             p += 2;
@@ -1420,7 +1440,8 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
                /* close previously opened element */
                if (strcmp(ptree->name, node_name) != 0)
                   return read_error(HERE, "Found </%s>, expected </%s>", node_name, ptree->name);
-            
+               ptree->line_number_end = line_number;
+               
                /* go up one level on the tree */
                ptree = ptree->parent;
 
@@ -1431,6 +1452,8 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
 
                /* allocate new element structure in parent tree */
                pnew = mxml_add_node(ptree, node_name, NULL);
+               pnew->line_number_start = line_number;
+               pnew->line_number_end = line_number;
 
                while (*p && isspace((unsigned char)*p)) {
                   if (*p == '\n')
@@ -2130,6 +2153,12 @@ void mxml_debug_tree(PMXML_NODE tree, int level)
    for (i=0 ; i<level ; i++)
       printf("  ");
    printf("Type: %d\n", tree->node_type);
+   for (i=0 ; i<level ; i++)
+      printf("  ");
+   printf("Lin1: %d\n", tree->line_number_start);
+   for (i=0 ; i<level ; i++)
+      printf("  ");
+   printf("Lin2: %d\n", tree->line_number_end);
 
    for (j=0 ; j<tree->n_attributes ; j++) {
       for (i=0 ; i<level ; i++)
@@ -2290,3 +2319,24 @@ void mxml_dirname(char *path)
 }
 
 /*------------------------------------------------------------------*/
+
+/**
+ * Retieve node at a certain line number
+ */
+PMXML_NODE mxml_get_node_at_line(PMXML_NODE tree, int line_number)
+{
+   int i;
+   PMXML_NODE pn;
+
+   if (tree->line_number_start == line_number)
+      return tree;
+   
+   for (i=0 ; i<tree->n_children ; i++) {
+      pn = mxml_get_node_at_line(&tree->child[i], line_number);
+      if (pn)
+         return pn;
+   }
+    
+   return NULL;
+}
+
