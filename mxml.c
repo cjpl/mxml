@@ -279,7 +279,6 @@ void mxml_encode(char *src, int size, int translate)
       buffer_size = size;
    }
 
-   ps = src;
    pd = _encode_buffer;
    for (ps = src ; *ps && (size_t)pd - (size_t)_encode_buffer < (size_t)(size-10) ; ps++) {
 
@@ -667,11 +666,8 @@ PMXML_NODE mxml_add_special_node_at(PMXML_NODE parent, int node_type, const char
    assert(parent);
    if (parent->n_children == 0)
       parent->child = (PMXML_NODE)mxml_malloc(sizeof(MXML_NODE));
-   else {
-      pchild = parent->child;
+   else
       parent->child = (PMXML_NODE)mxml_realloc(parent->child, sizeof(MXML_NODE)*(parent->n_children+1));
-
-   }
    assert(parent->child);
 
    /* move following nodes one down */
@@ -1754,8 +1750,6 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
                status = 1;
                goto error;
             }
-
-            len = (int)((size_t) pv - (size_t) p);
 
             entity_name[nentity][0] = '&';
             i = 1;
