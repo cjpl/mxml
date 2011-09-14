@@ -105,6 +105,10 @@ static int mxml_write_line(MXML_WRITER *writer, const char *line);
 static int mxml_start_element1(MXML_WRITER *writer, const char *name, int indent);
 static int mxml_add_resultnode(PMXML_NODE node, const char *xml_path, PMXML_NODE **nodelist, int *found);
 static int mxml_find_nodes1(PMXML_NODE tree, const char *xml_path, PMXML_NODE **nodelist, int *found);
+static void *mxml_malloc(size_t size);
+static void *mxml_realloc(void *p, size_t size);
+static void mxml_free(void *p);
+static void mxml_deallocate(void);
 
 /*------------------------------------------------------------------*/
 
