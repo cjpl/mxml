@@ -1274,13 +1274,15 @@ PMXML_NODE read_error(PMXML_NODE root, const char *file_name, int line_number, c
    else
       sprintf(str, "XML read error, line %d: ", line_number);
    msg = (char *)mxml_malloc(error_size);
-   strlcpy(error, str, error_size);
+   if (error)
+      strlcpy(error, str, error_size);
 
    va_start(argptr, format);
    vsprintf(str, (char *) format, argptr);
    va_end(argptr);
 
-   strlcat(error, str, error_size);
+   if (error)
+      strlcat(error, str, error_size);
    if (error_line)
       *error_line = line_number;
    
