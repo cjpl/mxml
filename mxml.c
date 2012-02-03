@@ -96,8 +96,7 @@
 static int mxml_suppress_date_flag = 0; /* suppress writing date at the top of file. */
 
 /* local prototypes */
-static PMXML_NODE read_error(PMXML_NODE root, const char *file_name, int line_number, char *error, int error_size,
-                             const char *format, ...) MXML_GNUC_PRINTF(6, 7);
+static PMXML_NODE read_error(PMXML_NODE root, const char *file_name, int line_number, char *error, int error_size, int *error_line, const char *format, ...) MXML_GNUC_PRINTF(7, 8);
 static void mxml_encode(char *src, int size, int translate);
 static void mxml_decode(char *str);
 static int mxml_write_subtree(MXML_WRITER *writer, PMXML_NODE tree, int indent);
@@ -1260,12 +1259,12 @@ int mxml_delete_attribute(PMXML_NODE pnode, const char *attrib_name)
 
 /*------------------------------------------------------------------*/
 
-#define HERE root, file_name, line_number, error, error_size
+#define HERE root, file_name, line_number, error, error_size, error_line
 
 /**
  * used inside mxml_parse_file for reporting errors
  */
-PMXML_NODE read_error(PMXML_NODE root, const char *file_name, int line_number, char *error, int error_size, const char *format, ...)
+PMXML_NODE read_error(PMXML_NODE root, const char *file_name, int line_number, char *error, int error_size, int *error_line, const char *format, ...)
 {
    char *msg, str[1000];
    va_list argptr;
@@ -1282,6 +1281,9 @@ PMXML_NODE read_error(PMXML_NODE root, const char *file_name, int line_number, c
    va_end(argptr);
 
    strlcat(error, str, error_size);
+   if (error_line)
+      *error_line = line_number;
+   
    mxml_free(msg);
    mxml_free_tree(root);
 
@@ -1295,7 +1297,7 @@ PMXML_NODE read_error(PMXML_NODE root, const char *file_name, int line_number, c
  * Return NULL in case of an error, return error description.
  * Optional file_name is used for error reporting if called from mxml_parse_file()
  */
-PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
+PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size, int *error_line)
 {
    char node_name[256], attrib_name[256], attrib_value[1000], quote;
    const char *p, *pv;
@@ -1613,7 +1615,7 @@ PMXML_NODE mxml_parse_buffer(const char *buf, char *error, int error_size)
  * Return 0 in case of no errors, return error description.
  * Optional file_name is used for error reporting if called from mxml_parse_file()
  */
-int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_size)
+int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_size, int *error_line)
 {
    char *p;
    char *pv;
@@ -1624,6 +1626,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
    char entity_reference_name[MXML_MAX_ENTITY][256];
    char *entity_value[MXML_MAX_ENTITY];
    int entity_type[MXML_MAX_ENTITY];    /* internal or external */
+   int entity_line_number[MXML_MAX_ENTITY];
    int nentity;
    int fh, length, len;
    char *buffer;
@@ -1716,7 +1719,9 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
                status = 1;
                goto error;
             }
-
+  
+            entity_line_number[nentity] = line_number;
+            
             pv = p + 7;
             while (*pv == ' ')
                pv++;
@@ -1901,14 +1906,10 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
          fh = open(filename, O_RDONLY | O_TEXT, 0644);
 
          if (fh == -1) {
-            entity_value[i] =
-                (char *) mxml_malloc(strlen(entity_reference_name[i]) + strlen("<!--  is missing -->") + 1);
-            if (entity_value[i] == NULL) {
-               read_error(HERE, "Cannot allocate memory.");
-               status = 1;
-               goto error;
-            }
-            sprintf(entity_value[i], "<!-- %s is missing -->", entity_reference_name[i]);
+            line_number = entity_line_number[i];
+            read_error(HERE, "%s is missing", entity_reference_name[i]);
+            status = 1;
+            goto error;
          } else {
             length = (int)lseek(fh, 0, SEEK_END);
             lseek(fh, 0, SEEK_SET);
@@ -1936,7 +1937,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
                close(fh);
 
                /* recursive parse */
-               if (mxml_parse_entity(&entity_value[i], filename, error, error_size) != 0) {
+               if (mxml_parse_entity(&entity_value[i], filename, error, error_size, error_line) != 0) {
                   status = 1;
                   goto error;
                }
@@ -1997,8 +1998,6 @@ error:
       if (entity_value[ip] != NULL)
          mxml_free(entity_value[ip]);
 
-   mxml_free_tree(root);
-
    return status;
 }
 
@@ -2008,7 +2007,7 @@ error:
  * parse a XML file and convert it into a tree of MXML_NODE's.
  * Return NULL in case of an error, return error description
  */
-PMXML_NODE mxml_parse_file(const char *file_name, char *error, int error_size)
+PMXML_NODE mxml_parse_file(const char *file_name, char *error, int error_size, int *error_line)
 {
    char *buf, line[1000];
    int fh, length;
@@ -2042,12 +2041,12 @@ PMXML_NODE mxml_parse_file(const char *file_name, char *error, int error_size)
    buf[length] = 0;
    close(fh);
 
-   if (mxml_parse_entity(&buf, file_name, error, error_size) != 0) {
+   if (mxml_parse_entity(&buf, file_name, error, error_size, error_line) != 0) {
       mxml_free(buf);
       return NULL;
    }
 
-   root = mxml_parse_buffer(buf, error, error_size);
+   root = mxml_parse_buffer(buf, error, error_size, error_line);
 
    mxml_free(buf);
 
