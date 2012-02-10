@@ -93,6 +93,7 @@ char *mxml_close_buffer(MXML_WRITER *writer);
 int mxml_close_file(MXML_WRITER *writer);
 
 int mxml_get_number_of_children(PMXML_NODE pnode);
+PMXML_NODE mxml_get_parent(PMXML_NODE pnode);
 PMXML_NODE mxml_subnode(PMXML_NODE pnode, int idx);
 PMXML_NODE mxml_find_node(PMXML_NODE tree, const char *xml_path);
 int mxml_find_nodes(PMXML_NODE tree, const char *xml_path, PMXML_NODE **nodelist);

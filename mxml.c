@@ -1056,6 +1056,14 @@ PMXML_NODE mxml_find_node(PMXML_NODE tree, const char *xml_path)
 
 /*------------------------------------------------------------------*/
 
+PMXML_NODE mxml_get_parent(PMXML_NODE pnode)
+{
+   assert(pnode);
+   return pnode->parent;
+}
+
+/*------------------------------------------------------------------*/
+
 char *mxml_get_name(PMXML_NODE pnode)
 {
    assert(pnode);
