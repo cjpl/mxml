@@ -36,8 +36,6 @@
    in the tree and for manipulating nodes, like replacing, adding and
    deleting nodes.
 
-   $Id$
-
 \********************************************************************/
 
 #include <stdio.h>
