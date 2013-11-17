@@ -74,7 +74,9 @@
 #endif
 
 #include "mxml.h"
+#ifndef HAVE_STRLCPY
 #include "strlcpy.h"
+#endif
 
 #define XML_INDENT "  "
 
